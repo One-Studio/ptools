@@ -2,6 +2,6 @@ package ptools
 
 import "fmt"
 
-func test()  {
+func Test()  {
 	fmt.Println("say hello to ptools~")
 }
