@@ -47,7 +47,7 @@ func Test() {
 	fmt.Println("say hello to ptools~")
 }
 
-// 快速打开文件和读内容
+//快速打开文件和读内容
 func ReadAll(path string) (string, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -60,7 +60,7 @@ func ReadAll(path string) (string, error) {
 	return str, nil
 }
 
-// 快速文件写先清空再写入
+//快速文件写先清空再写入
 func WriteFast(filePath string, content string) error {
 	dir, _ := path.Split(filePath)
 	exist := IsFileExisted(dir)
@@ -78,7 +78,7 @@ func WriteFast(filePath string, content string) error {
 	}
 }
 
-// 判断文件/文件夹是否存在
+//判断文件/文件夹是否存在
 func IsFileExisted(path string) bool {
 	_, err := os.Stat(path) //os.Stat获取文件信息
 	if os.IsNotExist(err) {
@@ -87,7 +87,64 @@ func IsFileExisted(path string) bool {
 	return true
 }
 
-// 利用HTTP Get请求获得数据
+//获取指定路径下的所有文件，只搜索当前路径，不进入下一级目录，可匹配后缀过滤（suffix为空则不过滤）
+func ListDir(dir, suffix string) (files []string, err error) {
+	files = []string{}
+
+	_dir, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	suffix = strings.ToLower(suffix) //匹配后缀
+
+	for _, _file := range _dir {
+		if _file.IsDir() {
+			continue //忽略目录
+		}
+		if len(suffix) == 0 || strings.HasSuffix(strings.ToLower(_file.Name()), suffix) {
+			//文件后缀匹配
+			files = append(files, path.Join(dir, _file.Name()))
+		}
+	}
+
+	return files, nil
+}
+
+//TODO 复制文件
+func CopyFile() {
+	//打开原始文件
+	originalFile, err := os.Open("test.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer originalFile.Close()
+	//创建新的文件作为目标文件
+	newFile, err := os.Create("test_copy.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer newFile.Close()
+	//从源中复制字节到目标文件
+	bytesWritten, err := io.Copy(newFile, originalFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Copied %d bytes.", bytesWritten)
+	//将文件内容flush到硬盘中
+	err = newFile.Sync()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+//TODO 移动文件
+func MoveFile() {
+
+}
+
+//利用HTTP Get请求获得数据
 func GetHttpData(url string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
@@ -102,7 +159,7 @@ func GetHttpData(url string) (string, error) {
 	return string(data), nil
 }
 
-// 下载文件 (下载地址，存放位置)
+//下载文件 (下载地址，存放位置)
 func DownloadFile(url string, location string) error {
 	//利用HTTP下载文件并读取内容给data
 	resp, err := http.Get(url)
@@ -137,13 +194,13 @@ func DownloadFile(url string, location string) error {
 	}
 }
 
-// 判断是不是non-ASCII
+//判断是不是non-ASCII
 func IsNonASCII(str string) bool {
 	re := regexp.MustCompile("[[:^ascii:]]")
 	return re.MatchString(str)
 }
 
-// 获取当前程序路径
+//获取当前程序路径
 func GetCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
@@ -152,12 +209,12 @@ func GetCurrentDirectory() string {
 	return strings.Replace(dir, "\\", "/", -1)
 }
 
-// 规格化路径
+//规格化路径
 func FormatPath(s string) string {
 	return strings.TrimRight(strings.Replace(s, "\\", "/", -1), "\\")
 }
 
-// 规格化到绝对路径
+//规格化到绝对路径
 func FormatAbsPath(s string) string {
 	if strings.HasPrefix(s, ".") {
 		s = strings.Replace(s, ".", GetCurrentDirectory(), 1)
@@ -165,7 +222,7 @@ func FormatAbsPath(s string) string {
 	return strings.TrimRight(strings.Replace(s, "\\", "/", -1), "\\")
 }
 
-// 复制文件夹
+//复制文件夹
 func CopyDir(from string, to string) error {
 	from = FormatPath(from)
 	to = FormatPath(to)
@@ -186,33 +243,75 @@ func CopyDir(from string, to string) error {
 		command = "cp -R " + from + " " + to
 	}
 
-	out, err := Cmd(command)
+	out, err := Exec(command)
 	if err != nil {
 		log.Println(out, err)
 	}
 	return err
 }
 
-// 执行一次command指令 跨平台兼容
-func Cmd(command string) (string, error) {
-	var out []byte
-	var err error
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd.exe", "/c", command)
-
-	} else {
-		cmd = exec.Command("/bin/bash", "-c", command)
-
-	}
-	// 隐藏黑框
+//执行一次command指令 跨平台兼容
+func Exec(command string) (string, error) {
+	cmdArgs := strings.Fields(command)
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	//隐藏黑框
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
-	out, err = cmd.CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	return string(out), err
+	//var out []byte
+	//var err error
+	//var cmd *exec.Cmd
+	//if runtime.GOOS == "windows" {
+	//	cmd = exec.Command("cmd.exe", "/c", command)
+	//} else {
+	//	cmd = exec.Command("/bin/bash", "-c", command)
+	//}
+	////隐藏黑框
+	//cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	//
+	//out, err = cmd.CombinedOutput()
+	//return string(out), err
 }
 
-// 查找（环境变量+当前位置）可执行文件的位置 跨平台兼容
+//执行一次command指令并实时输出每行结果 跨平台兼容 TODO 解决乱码问题
+func ExecRealtime(command string) error {
+	cmdArgs := strings.Fields(command)
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	//隐藏黑框
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		fmt.Println("cmd.StdoutPipe: ", err)
+		return err
+	}
+
+	cmd.Stderr = os.Stderr
+	if err = cmd.Start(); err != nil {
+		return err
+	}
+	//reader := bufio.NewReader(stdout)
+	//原方法
+	scanner := bufio.NewScanner(stdout)
+	scanner.Split(bufio.ScanRunes)
+
+	t, line := "", ""
+	for scanner.Scan() {
+		t = scanner.Text()
+		line += t
+		if t == "\n" {
+			//对每行的操作
+			fmt.Println(line)
+			line = ""
+		}
+	}
+
+	err = cmd.Wait()
+	return err
+}
+
+//查找（环境变量+当前位置）可执行文件的位置 跨平台兼容
 func GetBinaryPath(binary string) (string, error) {
 	var command string
 	if runtime.GOOS == "windows" {
@@ -221,41 +320,12 @@ func GetBinaryPath(binary string) (string, error) {
 		command = "which " + binary
 	}
 
-	dir, err := Cmd(command)
+	dir, err := Exec(command)
 	dir = strings.TrimSpace(dir)
 	return dir, err
 }
 
-// TODO 用法三：在命令位置使用并实时输出每行结果
-func RealtimeExecute(command string) error {
-	cmd := exec.Command("/bin/bash", "-c", command) //"/bin/bash", "-c",
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Println("cmd.StdoutPipe: ", err)
-		return err
-	}
-	cmd.Stderr = os.Stderr
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	//创建一个流来读取管道内内容，这里逻辑是通过一行一行的读取的
-	reader := bufio.NewReader(stdout)
-	//实时循环读取输出流中的一行内容
-	for {
-		line, err2 := reader.ReadString('\n')
-		if err2 != nil || io.EOF == err2 {
-			break
-		}
-		//！对每行的操作
-		fmt.Println(line)
-	}
-	err = cmd.Wait()
-	return err
-}
-
-// TODO 暂停目前只能linux macos 使用
+//TODO 暂停目前只能linux macos 使用
 func FFmpegPauseWhenRunning(command string) {
 	//command := "./x264 /Users/purp1e/vd/in.mp4 --crf 18 --preset 3 -o /Users/purp1e/vd/outx264.mp4"
 	//command := "ffmpeg -i /Users/purp1e/vd/in.mp4 -vcodec libx264 -crf 18 -preset 1 -acodec copy /Users/purp1e/vd/out3.mp4 -y"
@@ -340,67 +410,3 @@ func FFmpegPauseWhenRunning(command string) {
 	_ = cmd.Wait()
 }
 
-// TODO 修改bug
-func CheckExist(binary string) {
-	_, err := Cmd(binary)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// 获取指定路径下的所有文件，只搜索当前路径，不进入下一级目录，可匹配后缀过滤（suffix为空则不过滤）
-func ListDir(dir, suffix string) (files []string, err error) {
-	files = []string{}
-
-	_dir, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	suffix = strings.ToLower(suffix) //匹配后缀
-
-	for _, _file := range _dir {
-		if _file.IsDir() {
-			continue //忽略目录
-		}
-		if len(suffix) == 0 || strings.HasSuffix(strings.ToLower(_file.Name()), suffix) {
-			//文件后缀匹配
-			files = append(files, path.Join(dir, _file.Name()))
-		}
-	}
-
-	return files, nil
-}
-
-// TODO 复制文件
-func unset() {
-	// 打开原始文件
-	originalFile, err := os.Open("test.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer originalFile.Close()
-	// 创建新的文件作为目标文件
-	newFile, err := os.Create("test_copy.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer newFile.Close()
-	// 从源中复制字节到目标文件
-	bytesWritten, err := io.Copy(newFile, originalFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("Copied %d bytes.", bytesWritten)
-	// 将文件内容flush到硬盘中
-	err = newFile.Sync()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-}
-
-// TODO 移动文件
-func MoveFile() {
-
-}

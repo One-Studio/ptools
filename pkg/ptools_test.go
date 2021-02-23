@@ -41,13 +41,13 @@ func TestCmd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Cmd(tt.args.command)
+			got, err := Exec(tt.args.command)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Cmd() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Exec() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Cmd() got = %v, want %v", got, tt.want)
+				t.Errorf("Exec() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
