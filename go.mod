@@ -1,4 +1,4 @@
-module github.com/One-Studio/ptools/pkg
+module github.com/One-Studio/ptools
 
 go 1.15
 
