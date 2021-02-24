@@ -27,6 +27,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"golang.org/x/text/encoding/simplifiedchinese"
 	"io"
 	"io/ioutil"
 	"log"
@@ -274,7 +275,7 @@ func Exec(command string) (string, error) {
 	//return string(out), err
 }
 
-//执行一次command指令并实时输出每行结果 跨平台兼容 TODO 解决乱码问题
+//执行一次command指令并实时输出每行结果 跨平台兼容
 func ExecRealtime(command string) error {
 	cmdArgs := strings.Fields(command)
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
@@ -283,32 +284,35 @@ func ExecRealtime(command string) error {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Println("cmd.StdoutPipe: ", err)
 		return err
 	}
-
-	cmd.Stderr = os.Stderr
-	if err = cmd.Start(); err != nil {
+	err = cmd.Start()
+	if err != nil {
 		return err
 	}
-	//reader := bufio.NewReader(stdout)
-	//原方法
-	scanner := bufio.NewScanner(stdout)
-	scanner.Split(bufio.ScanRunes)
-
-	t, line := "", ""
-	for scanner.Scan() {
-		t = scanner.Text()
-		line += t
-		if t == "\n" {
-			//对每行的操作
-			fmt.Println(line)
-			line = ""
-		}
+	in := bufio.NewScanner(stdout)
+	for in.Scan() {
+		cmdRe:=ConvertByte2String(in.Bytes(),"GB18030")
+		fmt.Println(cmdRe)
 	}
 
 	err = cmd.Wait()
 	return err
+}
+
+//转换编码解决乱码问题
+func ConvertByte2String(byte []byte, charset string) string {
+	var str string
+	switch charset {
+	case "GB18030":
+		var decodeBytes,_=simplifiedchinese.GB18030.NewDecoder().Bytes(byte)
+		str= string(decodeBytes)
+	case "UTF8":
+		fallthrough
+	default:
+		str = string(byte)
+	}
+	return str
 }
 
 //查找（环境变量+当前位置）可执行文件的位置 跨平台兼容

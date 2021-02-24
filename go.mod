@@ -1,3 +1,5 @@
 module github.com/One-Studio/ptools
 
 go 1.15
+
+require golang.org/x/text v0.3.5
