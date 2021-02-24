@@ -1,5 +1,8 @@
-module github.com/One-Studio/ptools
+module github.com/One-Studio/ptools/pkg
 
 go 1.15
 
-require golang.org/x/text v0.3.5
+require (
+	github.com/axgle/mahonia v0.0.0-20180208002826-3358181d7394
+	github.com/otiai10/copy v1.5.0
+)
