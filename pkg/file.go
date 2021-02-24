@@ -8,6 +8,19 @@ import (
 	"strings"
 )
 
+//规格化路径 \ -> /
+func FormatPath(s string) string {
+	return path.Clean(strings.Replace(s, "\\", "/", -1))
+}
+
+//规格化到绝对路径
+func FormatAbsPath(s string) string {
+	if strings.HasPrefix(s, ".") {
+		s = strings.Replace(s, ".", Getwd(), 1)
+	}
+	return FormatPath(s)
+}
+
 //快速打开文件和读内容
 func ReadAll(path string) (string, error) {
 	content, err := ioutil.ReadFile(path)
@@ -23,13 +36,11 @@ func ReadAll(path string) (string, error) {
 
 //快速文件写先清空再写入
 func WriteFast(filePath string, content string) error {
-	dir, _ := path.Split(filePath)
+	dir, _ := path.Split(FormatAbsPath(filePath))
 	exist := IsFileExisted(dir)
 	if exist == false {
-		err := os.Mkdir(dir, os.ModePerm)
-		if err != nil {
-			return err
-		}
+		_ = os.Mkdir(dir, os.ModePerm)
+		//这里跳过检测，写文件的时候出错同样会报错
 	}
 	err := ioutil.WriteFile(filePath, []byte(content), 0666)
 	if err != nil {
@@ -55,54 +66,33 @@ func Getwd() (wd string) {
 }
 
 //获取指定路径下的所有文件，只搜索当前路径，不进入下一级目录，可匹配后缀过滤（suffix为空则不过滤）TODO
-func ListDir(path2List, suffix string) (files []string, err error) {
-	files = []string{}
-
-	dir, err := ioutil.ReadDir(path2List)
-	if err != nil {
-		return nil, err
-	}
-
-	suffix = strings.ToLower(suffix) //匹配后缀
-
-	for _, v := range dir {
-		//if v.IsDir() {
-		//	continue //忽略目录
-		//}
-		if len(suffix) == 0 || strings.HasSuffix(strings.ToLower(v.Name()), suffix) {
-			//文件后缀匹配
-			files = append(files, path.Join(path2List, v.Name()))
-		}
-	}
-
-	return files, nil
-}
+//func ListDir(path2List, suffix string) (files []string, err error) {
+//	files = []string{}
+//
+//	dir, err := ioutil.ReadDir(path2List)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	suffix = strings.ToLower(suffix) //匹配后缀
+//
+//	for _, v := range dir {
+//		//if v.IsDir() {
+//		//	continue //忽略目录
+//		//}
+//		if len(suffix) == 0 || strings.HasSuffix(strings.ToLower(v.Name()), suffix) {
+//			//文件后缀匹配
+//			files = append(files, path.Join(path2List, v.Name()))
+//		}
+//	}
+//
+//	return files, nil
+//}
 
 //复制文件夹或者文件
 func XCopy(from, to string) error {
 	return copy.Copy(from, to)
-	//from = FormatPath(from)
-	//to = FormatPath(to)
-	//
-	////确保目标路径存在，否则复制报错exit status 4 || WTF cmd用就行 这里用就不行
-	//exist := IsFileExisted(to)
-	//if exist == false {
-	//	err := os.Mkdir(to, os.ModePerm)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	//
-	//var command string
-	//if runtime.GOOS == "windows" {
-	//	command = "xcopy /I /E /Y /R " + strconv.Quote(from) + " " + strconv.Quote(to)
-	//} else {
-	//	command = "cp -R " + strconv.Quote(from) + " " + strconv.Quote(to)
-	//}
-	//
-	//fmt.Println(command)
-	//_, err := Exec(command)
-	//return err
+
 }
 
 //移动文件夹或者文件

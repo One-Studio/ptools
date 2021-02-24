@@ -9,7 +9,6 @@ import (
 	"path"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 //简单测试 打个招呼
@@ -71,18 +70,5 @@ func DownloadFile(url string, location string) error {
 func IsNonASCII(str string) bool {
 	re := regexp.MustCompile("[[:^ascii:]]")
 	return re.MatchString(str)
-}
-
-//规格化路径 \ -> /
-func FormatPath(s string) string {
-	return path.Clean(strings.Replace(s, "\\", "/", -1))
-}
-
-//规格化到绝对路径
-func FormatAbsPath(s string) string {
-	if strings.HasPrefix(s, ".") {
-		s = strings.Replace(s, ".", Getwd(), 1)
-	}
-	return FormatPath(s)
 }
 
