@@ -148,16 +148,16 @@ func ExecRealtimeControl(command string, method func(line string), signal chan r
 }
 
 //实时控制的时候暂停
-func ExecPause(a chan rune)  {
+func Pause(a chan rune)  {
 	a <- 'p'
 }
 
 //实时控制的时候继续
-func ExecResume(a chan rune)  {
+func Resume(a chan rune)  {
 	a <- 'r'
 }
 
 //实时控制的时候结束
-func ExecQuit(a chan rune)  {
+func Quit(a chan rune)  {
 	a <- 'q'
 }
