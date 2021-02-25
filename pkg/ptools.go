@@ -1,8 +1,10 @@
 package ptools
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"github.com/axgle/mahonia"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -72,3 +74,30 @@ func IsNonASCII(str string) bool {
 	return re.MatchString(str)
 }
 
+//自定义Scanner分割的方式，\n和\r都分割
+func ScanCRandLF(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	//优先分割换行\n
+	if i := bytes.IndexAny(data, "\n"); i >= 0 {
+		return i + 1, data[0:i], nil
+	}
+
+	//然后分割行首\r
+	if i := bytes.IndexAny(data, "\r"); i >= 0 {
+		return i + 1, data[0 : len(data)-1], nil
+	}
+
+	if atEOF {
+		return len(data), data, nil
+	}
+
+	return 0, nil, nil
+}
+
+//转换编码解决chcp936的中文乱码问题
+func ConvertString(s string) string {
+	return mahonia.NewDecoder("GBK").ConvertString(s)
+}
