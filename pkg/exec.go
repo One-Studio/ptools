@@ -5,14 +5,17 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/axgle/mahonia"
+	"log"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
+	"time"
 )
 
 //自定义Scanner分割的方式，\n和\r都分割
-func ScanCRorLF(data []byte, atEOF bool) (advance int, token []byte, err error) {
+func ScanCRandLF(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
 	}
@@ -24,7 +27,7 @@ func ScanCRorLF(data []byte, atEOF bool) (advance int, token []byte, err error) 
 
 	//然后分割行首\r
 	if i := bytes.IndexAny(data, "\r"); i >= 0 {
-		return i + 1, data[0:len(data)-1], nil
+		return i + 1, data[0 : len(data)-1], nil
 	}
 
 	if atEOF {
@@ -79,7 +82,7 @@ func ExecRealtime(command string, method func(line string)) error {
 
 	//实时处理输出 TODO 可能有并发隐患导致内存溢出
 	go func() {
-		scanner.Split(ScanCRorLF)
+		scanner.Split(ScanCRandLF)
 		for scanner.Scan() {
 			//对每一行的操作
 			method(string(scanner.Bytes()))
@@ -97,6 +100,7 @@ func ExecRealtimePrint(command string) error {
 	})
 }
 
+//执行时解决cmd chcp936的中文乱码问题
 func ExecRealtimePrintGBK(command string) error {
 	return ExecRealtime(command, func(line string) {
 		fmt.Println(ConvertString(line))
@@ -122,8 +126,10 @@ func GetBinaryPath(binary string) (string, error) {
 	return dir, err
 }
 
-//TODO 暂时只能linux macos使用 windows要用pstools.exe
-func ExecRealtimePause(command string, method func(line string)) error {
+
+//windows要用winPssuspend.exe 需指定其路径
+//其他系统留空
+func ExecRealtimePause(command string, method func(line string), a chan rune, winPssuspend string) error {
 	//跨平台兼容，cmd/bash传参是为了使用二者自带的命令，直接exec无法使用这些命令
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
@@ -152,7 +158,7 @@ func ExecRealtimePause(command string, method func(line string)) error {
 
 	//实时处理输出 TODO 可能有并发隐患导致内存溢出
 	go func() {
-		scanner.Split(ScanCRorLF)
+		scanner.Split(ScanCRandLF)
 		for scanner.Scan() {
 			//对每一行的操作
 			method(string(scanner.Bytes()))
@@ -161,20 +167,43 @@ func ExecRealtimePause(command string, method func(line string)) error {
 	}()
 
 	go func() {
-		//TODO 解决windows下没法暂停的问题
-		//     思路是，inputpipe中传入按键PauseBreak和Enter键
-		//     暂用外部工具pssuspend.exe代替
-		//time.Sleep(time.Second * 10)
+		for {
+			switch <-a {
+			case 'p':
+				//暂停
+				if runtime.GOOS == "windows" {
+					fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
+					if out, err := Exec(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+						log.Println(out)
+						log.Println(err)
+					}
+				} else {
+					cmd.Process.Signal(syscall.SIGTSTP)	//win下不可用
+				}
+				a <- ' '
+			case 'r':
+				//继续
+				if runtime.GOOS == "windows" {
+					fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
+					if out, err := Exec(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+						log.Println(out)
+						log.Println(err)
+					}
+				} else {
+					cmd.Process.Signal(syscall.SIGCONT)	//win下不可用
+				}
+				a <- ' '
+			case 'q':
+				//中止
+				if err = cmd.Process.Kill(); err != nil {
+					log.Println(err)
+				}
+				break
+			}
 
-		//暂停
-		//cmd.Process.Signal(syscall.SIGTSTP)	//win下不可用
-
-		//继续
-		//cmd.Process.Signal(syscall.SIGCONT)	//win下不可用
-
-		//cmd.Process.Kill()
+			time.Sleep(time.Second * 1)
+		}
 	}()
 
 	return cmd.Wait()
 }
-

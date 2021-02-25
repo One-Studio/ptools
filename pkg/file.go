@@ -5,12 +5,18 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 )
 
-//规格化路径 \ -> /
+//规格化路径
 func FormatPath(s string) string {
-	return path.Clean(strings.Replace(s, "\\", "/", -1))
+	if runtime.GOOS == "windows" {
+		s = strings.Replace(s, "/", "\\", -1)
+	} else {
+		s = strings.Replace(s, "\\", "/", -1)
+	}
+	return path.Clean(s)
 }
 
 //规格化到绝对路径
@@ -36,7 +42,8 @@ func ReadAll(path string) (string, error) {
 
 //快速文件写先清空再写入
 func WriteFast(filePath string, content string) error {
-	dir, _ := path.Split(FormatAbsPath(filePath))
+	filePath = FormatAbsPath(filePath)
+	dir, _ := path.Split(filePath)
 	exist := IsFileExisted(dir)
 	if exist == false {
 		_ = os.Mkdir(dir, os.ModePerm)
