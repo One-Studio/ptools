@@ -19,13 +19,13 @@ func main() {
 	go func() {
 		time.Sleep(time.Second *1)
 		fmt.Println("触发暂停")
-		tool.ExecPause(a)
+		tool.Pause(a)
 		time.Sleep(time.Second *2)
 		fmt.Println("触发继续")
-		tool.ExecResume(a)
+		tool.Resume(a)
 		time.Sleep(time.Second *2)
 		fmt.Println("触发结束")
-		tool.ExecQuit(a)
+		tool.Quit(a)
 	}()
 	err := tool.ExecRealtimeControl(ffcommand, func(line string) {
 		fmt.Println(line)

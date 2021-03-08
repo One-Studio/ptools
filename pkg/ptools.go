@@ -101,3 +101,10 @@ func ScanCRandLF(data []byte, atEOF bool) (advance int, token []byte, err error)
 func ConvertString(s string) string {
 	return mahonia.NewDecoder("GBK").ConvertString(s)
 }
+
+//正确比较版本号
+func CompareVersion(v1, v2 string) int {
+
+
+	return 0
+}
