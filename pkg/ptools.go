@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"github.com/axgle/mahonia"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 //简单测试 打个招呼
@@ -31,6 +33,21 @@ func GetHttpData(url string) (string, error) {
 	_ = resp.Body.Close()
 
 	return string(data), nil
+}
+
+//利用HTTP Get请求获得数据的字节切片
+func GetHttpDataByteSlice(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	_ = resp.Body.Close()
+
+	return data, nil
 }
 
 //下载文件 (下载地址，存放位置)
@@ -102,9 +119,62 @@ func ConvertString(s string) string {
 	return mahonia.NewDecoder("GBK").ConvertString(s)
 }
 
-//正确比较版本号
+//比较版本号 1: v1>v2  -1: v1<v2  0: v1=v2
 func CompareVersion(v1, v2 string) int {
+	re, err := regexp.Compile("\\d+|\\D+")
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	s1 := re.FindAllString(v1, -1)
+	s2 := re.FindAllString(v2, -1)
 
-	return 0
+	var n1, n2 int64
+	for i, isNum1, isNum2 := 0, false, false; i < len(s1) && i < len(s2); i++ {
+		//排除版本号里的.
+		if s1[i] == "." {
+			continue
+		}
+
+		if isNum1, err = regexp.MatchString("\\d", s1[i]); err != nil {
+			log.Fatal(err)
+		} else if isNum1 {
+			if n1, err = strconv.ParseInt(s1[i], 10, 32); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		if isNum2, err = regexp.MatchString("\\d", s2[i]); err != nil {
+			log.Fatal(err)
+		} else if isNum2 {
+			if n2, err = strconv.ParseInt(s2[i], 10, 32); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		if isNum1 != isNum2 {
+			//版本号格式不匹配
+			log.Println("version formats of 2 strings are not correspond, using simple string compare method.")
+			return strings.Compare(v1, v2)
+		} else if isNum1 {
+			if n1 > n2 {
+				return 1
+			} else if n1 < n2 {
+				return -1
+			}
+		} else {
+			if res := strings.Compare(s1[i], s2[i]); res != 0 {
+				return res
+			}
+		}
+	}
+
+	//共有部分全部一致则根据长度决定
+	if len(v1) > len(v2) {
+		return 1
+	} else if len(v1) < len(v2) {
+		return -1
+	} else {
+		return 0
+	}
 }
