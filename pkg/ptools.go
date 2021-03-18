@@ -178,3 +178,9 @@ func CompareVersion(v1, v2 string) int {
 		return 0
 	}
 }
+
+//TODO 元素去重
+func RemoveRepeatElements(input []interface{}) []interface{} {
+
+	return input
+}

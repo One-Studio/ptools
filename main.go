@@ -39,6 +39,9 @@ func main() {
 
 	tool.Test()
 
-	tool.CompareVersion("v1.0.1-alpha", "v1.0.2-aa")
-	tool.CompareVersion("v1.0.1", "v2.0.0-alpha.47")
+	fmt.Println(tool.CompareVersion("v1.0.1-alpha", "v1.0.2-aa"))
+	fmt.Println(tool.CompareVersion("a1.0.1", "v2.0.0-alpha.47"))
+	fmt.Println(tool.CompareVersion("z1.0.1", "v2.0.0-alpha.47"))
+	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2.3"))
+	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2"))
 }
