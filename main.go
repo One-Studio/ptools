@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	tool "github.com/One-Studio/ptools/pkg"
+	"github.com/cavaliercoder/grab"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -13,6 +15,7 @@ func test1()  {
 	suspend := "C:\\Users\\Purp1e\\go\\src\\github.com\\One-Studio\\ptools\\temp\\pssuspend.exe"
 	//x264command := "E:/测试/x264.exe E:/测试/测试ff.mp4 --crf 26 --preset slow -output E:/测试/结果.mp4"
 	a := make(chan rune)
+	defer close(a)
 	go func() {
 		time.Sleep(time.Second *1)
 		fmt.Println("触发暂停")
@@ -35,13 +38,69 @@ func test1()  {
 
 }
 
-func main() {
+func testGrab()  {
+	//https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/download_link
+	resp, err := grab.Get(".", "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/download_link")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	tool.Test()
+	fmt.Println("Download saved to", resp.Filename)
+}
 
+func testChan()  {
+	value := ""
+	var c = make(chan string)
+	defer close(c)
+	go func() {
+		fmt.Println("第一个go routine")
+		value = "第一个"
+		c <- "1"
+	}()
+
+	go func() {
+		fmt.Println("第二个go routine")
+		value = "第二个"
+		c <- "2"
+	}()
+
+
+	fmt.Println("测试结束", <- c)
+	time.Sleep(time.Second)
+	fmt.Println("测试结束", <- c)
+
+}
+
+func testWG()  {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Println("第一件事做完")
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Println("第二件事做完")
+	}()
+
+	wg.Wait()
+	time.Sleep(time.Second)
+}
+
+func testCompareVersion()  {
 	fmt.Println(tool.CompareVersion("v1.0.1-alpha", "v1.0.2-aa"))
 	fmt.Println(tool.CompareVersion("a1.0.1", "v2.0.0-alpha.47"))
 	fmt.Println(tool.CompareVersion("z1.0.1", "v2.0.0-alpha.47"))
 	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2.3"))
 	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2"))
+}
+
+func main() {
+
+	tool.Test()
+
+	//testChan()
+	testWG()
 }

@@ -1,15 +1,20 @@
 package ptools
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"fmt"
 	"github.com/axgle/mahonia"
+	"github.com/cavaliercoder/grab"
+	"github.com/gen2brain/go-unarr"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -84,6 +89,32 @@ func DownloadFile(url string, location string) error {
 		return nil
 	}
 }
+
+//下载文件，利用grab库
+func GrabDownload(location string, url string) (filename string, err error) {
+	resp, err := grab.Get(location, url)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Filename, nil
+}
+
+//下载API->下载链接 有时下载链接存放在url对应的文件中，处理之后确保最终得到的是下载链接
+//func Api2DownloadUrl(url string) (string, error) {
+//	_, tail := path.Split(url)
+//	if !strings.Contains(tail, ".") {
+//		data, err := GetHttpData(url)
+//		if err != nil {
+//			return "", err
+//		}
+//		if strings.HasSuffix(data, "http") {
+//			return data, err
+//		}
+//	}
+//
+//	return url, nil
+//}
 
 //判断是不是non-ASCII
 func IsNonASCII(str string) bool {
@@ -177,6 +208,121 @@ func CompareVersion(v1, v2 string) int {
 	} else {
 		return 0
 	}
+}
+
+//判断是不是这里支持的压缩包格式
+func IsCompressed(file string) bool {
+	suffix := []string{".zip", ".7z", ".rar", ".tar"}
+	_, filename := path.Split(file)
+	for _, suf := range suffix {
+		if strings.Contains(filename, suf) {
+			return true
+		}
+	}
+
+	return false
+}
+
+//解压zip 7z rar tar
+func Decompress(from string, to string) error {
+	a, err := unarr.NewArchive(from)
+	if err != nil {
+		return err
+	}
+	defer a.Close()
+
+	_, err = a.Extract(to)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+//Zip压缩
+func Zip(from string, toZip string) error {
+	zipfile, err := os.Create(toZip)
+	if err != nil {
+		return err
+	}
+	defer zipfile.Close()
+
+	archive := zip.NewWriter(zipfile)
+	defer archive.Close()
+
+	_ = filepath.Walk(from, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+
+		header.Name = strings.TrimPrefix(path, filepath.Dir(from)+"/")
+		// header.Name = path
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := archive.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			_, err = io.Copy(writer, file)
+		}
+		return err
+	})
+
+	return err
+}
+
+//Zip解压
+func Unzip(zipFile string, to string) error {
+	zipReader, err := zip.OpenReader(zipFile)
+	if err != nil {
+		return err
+	}
+	defer zipReader.Close()
+
+	for _, f := range zipReader.File {
+		fpath := filepath.Join(to, f.Name)
+		if f.FileInfo().IsDir() {
+			_ = os.MkdirAll(fpath, os.ModePerm)
+		} else {
+			if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+				return err
+			}
+
+			inFile, err := f.Open()
+			defer inFile.Close()
+			if err != nil {
+				return err
+			}
+
+			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+			defer outFile.Close()
+			if err != nil {
+				return err
+			}
+
+			_, err = io.Copy(outFile, inFile)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 //TODO 元素去重

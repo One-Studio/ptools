@@ -3,10 +3,10 @@ package ptools
 import (
 	"errors"
 	"fmt"
+	"log"
 	"path"
 	"regexp"
 	"sync"
-
 	//"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"os"
@@ -64,12 +64,11 @@ type GitHubLatest struct {
 //      - 版本相等->同时下载直到某一个下载完成
 //      - srcVer > cdnVer -> 下载官方源
 //      - srcVer < cdnVer -> 返回error "cdn version is above source version"
-// - 根据 filename 和 format 安装下载好的文件
+// - 根据 format 安装下载好的文件 isCompressed
 //    - 压缩包->解压到"dir/工具名/"
 //    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) Install() error {
-	dir, bin := path.Split(t.Path)
-
+	dir, _ := path.Split(t.Path)
 	if t.CheckExist() {
 		if t.TakeOver == false {
 			fmt.Println("请用户自行更新工具")
@@ -88,68 +87,130 @@ func (t *tool) Install() error {
 		}
 	}
 
-	var srcVer, cdnVer string
+	var srcVer, cdnVer, srcUrl, cdnUrl string
 	var srcOK, cdnOK  = false, false
-
-
-	//TODO 并发检查官方源和CDN源
-	//读取官方源和CDN源的版本号和下载地址
-	if t.IsGitHub {
-		err := nil
-		srcVer, t.DownloadLink, err = t.ParseGithubLatestRelease()
-		if err != nil {
-			srcOK = false
-		}
-
-	} else {
-		//利用版本号获得官方源版本
-		if data, err := GetHttpData(t.VersionApi); err != nil {
-			//TODO 错误处理
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		//读取官方源版本号和下载地址
+		if t.IsGitHub {
+			if tVer, tUrl, err := t.ParseGithubLatestRelease(); err != nil {
+				srcOK = false
+			} else {
+				srcVer = tVer
+				srcUrl = tUrl
+				srcOK = true
+			}
 		} else {
-			srcVer = data
+			//利用版本号API获得官方源版本
+			if data, err := GetHttpData(t.VersionApi); err != nil {
+				log.Println(err)
+				srcOK = false
+			} else {
+				srcVer = data
+				srcUrl = t.DownloadLink
+				srcOK = true
+			}
 		}
-	}
+	}()
 
-	//获取CDN源版本
-	if data, err := GetHttpData(t.VersionApiCDN); err != nil {
-		//TODO 错误处理
-	} else {
-		cdnVer = data
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		//获取CDN源版本和下载地址
+		if data, err := GetHttpData(t.VersionApiCDN); err != nil {
+			log.Println(err)
+			cdnOK = false
+		} else {
+			cdnVer = data
+			cdnUrl = t.DownloadLinkCDN
+			cdnOK = true
+		}
+	}()
+
+	wg.Wait()
 
 	//决定如何下载
-	if srcVer == cdnVer {
+	var tempDir, url, filename string
+	if srcOK && cdnOK && CompareVersion(srcVer, cdnVer) == 0 {
+		//并发下载
+		var c = make(chan string)
+		defer close(c)
+		go func() {
+			if tempName, err := GrabDownload("./temp/" + t.Name + "/src/", srcUrl); err != nil {
+				c <- ""
+			} else {
+				c <- "./temp/" + t.Name + "/src/" + tempName
+			}
+		}()
 
+		go func() {
+			if tempName, err := GrabDownload("./temp/" + t.Name + "/cdn/", cdnUrl); err != nil {
+				c <- ""
+			} else {
+				c <- "./temp/" + t.Name + "/cdn/" + tempName
+			}
+		}()
+
+		count := 0
+		for temp := range c {
+			if temp == "" {
+				count++
+			} else {
+				tempDir, filename = path.Split(temp)
+				break
+			}
+
+			if count > 1 {
+				return errors.New("failed to download from both src and cdn mirror")
+			}
+		}
+	} else {
+		if !srcOK && !cdnOK {
+			return errors.New("install/update failed on src and cdn mirror")
+		} else if srcOK && !cdnOK {
+			//下载src
+			tempDir = "./temp/" + t.Name + "/src/"
+			url = srcUrl
+		} else if !srcOK && cdnOK {
+			//下载cdn
+			tempDir = "./temp/" + t.Name + "/cdn/"
+			url = cdnUrl
+		} else {
+			//两个源都OK 判断版本号
+			switch CompareVersion(srcVer, cdnVer) {
+			case 1:
+				//下载src
+				tempDir = "./temp/" + t.Name + "/src/"
+				url = srcUrl
+			case -1:
+				//报错
+				return errors.New("cdn version is above src version")
+			}
+		}
+
+		//单线下载
+		var err error
+		if filename, err = GrabDownload(tempDir, url); err != nil {
+			return err
+		}
 	}
 
-	//下载工具 TODO
-	src, cdn, path := make(chan bool), make(chan bool), ""
-	go func() {
-		_ = DownloadFile(t.DownloadLink, "./temp/1/")	//TODO 不会重复的下载位置
-
-		src <- true
-	}()
-	go func() {
-		_ = DownloadFile(t.DownloadLinkCDN, "./temp/2/")
-
-		cdn <- true
-	}()
-
-
-	select {
-	case <-src:
-		path = "./temp/1/" + srcFilename
-	case <-cdn:
-		path = "./temp/2/" + cdnFilename
+	//判断文件类型
+	if IsCompressed(filename) {
+		//解压
+		if err := Decompress(tempDir + filename, dir); err != nil {
+			return err
+		}
+	} else {
+		//直接转移
+		if err := XCopy(tempDir + filename, dir); err != nil {
+			return err
+		}
 	}
 
-	//安装工具 TODO
-	//1-解压
-
-	//2-直接转移
-	_ = XCopy(path, dir)
-
-	return nil
+	return os.Remove("./temp/" + t.Name)
 }
 
 //检查更新
@@ -189,7 +250,7 @@ func (t *tool) GetCliVersion() (ver string, err error) {
 	} else {
 		re, err := regexp.Compile(t.VersionRegExp)
 		if err != nil {
-			return
+			return "", err
 		}
 
 		return re.FindString(output), nil
@@ -200,8 +261,6 @@ func (t *tool) GetCliVersion() (ver string, err error) {
 //@param []byte json数据
 //@return ver->版本号, url->下载链接, error->错误
 //说明：string类型数据要转换成byte切片
-//算法：
-// -
 func (t *tool) ParseGithubApiData(jsonData []byte) (ver, url string, err error) {
 	var latestInst GitHubLatest
 	var jsonX = jsoniter.ConfigCompatibleWithStandardLibrary
