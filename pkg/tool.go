@@ -21,8 +21,7 @@ type tool struct {
 	IsGitHub        bool     //是否为GitHub地址
 	IsCLI           bool     //是否为命令行程序
 	KeyWords        []string //下载的文件的关键字
-	//TODO 用户自行更新还是这里自动更新
-	//TODO 下载之后解压还是直接copy 根据格式 zip/rar等解压 此外
+	TakeOver		bool	 //工具更新是否由这里接管，false->用户自行更新
 }
 
 //Github Asset
@@ -46,6 +45,21 @@ type GitHubLatest struct {
 }
 
 //安装工具
+//@param string dir->安装位置 如 "./tool/"
+//@return error->错误
+//算法：
+// - 检查安装位置，不存在则创建，创建失败返回error
+// - 同时检查官方源和CDN源，根据结果设置srcOK/cdnOK为true/false
+// - 根据 srcOK cdnOK srcVer cdnVer 决定安装方式
+//    - srcOK/cdnOK 均为false->返回error
+//    - srcOK/cdnOK true/false各一->直接下载
+//    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
+//      - 版本相等->同时下载直到某一个下载完成
+//      - srcVer > cdnVer -> 下载官方源
+//      - srcVer < cdnVer -> 返回error "cdn version is above source version"
+// - 根据 filename 和 format 安装下载好的文件
+//    - 压缩包->解压到"dir/工具名/"
+//    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) Install(dir string) error {
 	var srcVersion, cdnVersion, srcFilename, cdnFilename string
 	var srcOK, cdnOK  = false, false
@@ -146,23 +160,83 @@ func (t *tool) Install(dir string) error {
 }
 
 //检查更新
+//@param string dir->安装位置 如 "./tool/"
+//@return error->错误
+//算法：
+// - 检查安装位置，不存在则创建，创建失败返回error
+// - 同时检查官方源和CDN源，根据结果设置srcOK/cdnOK为true/false
+// - 根据 srcOK cdnOK srcVer cdnVer 决定安装方式
+//    - srcOK/cdnOK 均为false->返回error
+//    - srcOK/cdnOK true/false各一->直接下载
+//    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
+//      - 版本相等->同时下载直到某一个下载完成
+//      - srcVer > cdnVer -> 下载官方源
+//      - srcVer < cdnVer -> 返回error "cdn version is above source version"
+// - 根据 filename 和 format 安装下载好的文件
+//    - 压缩包->解压到"dir/工具名/"
+//    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) CheckUpdate() error {
 
 	return nil
 }
 
 //检查是否存在
+//@param string dir->安装位置 如 "./tool/"
+//@return error->错误
+//算法：
+// - 检查安装位置，不存在则创建，创建失败返回error
+// - 同时检查官方源和CDN源，根据结果设置srcOK/cdnOK为true/false
+// - 根据 srcOK cdnOK srcVer cdnVer 决定安装方式
+//    - srcOK/cdnOK 均为false->返回error
+//    - srcOK/cdnOK true/false各一->直接下载
+//    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
+//      - 版本相等->同时下载直到某一个下载完成
+//      - srcVer > cdnVer -> 下载官方源
+//      - srcVer < cdnVer -> 返回error "cdn version is above source version"
+// - 根据 filename 和 format 安装下载好的文件
+//    - 压缩包->解压到"dir/工具名/"
+//    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) CheckExist() bool {
 
 	return false
 }
 
 //获取命令行工具的版本号
+//@param string dir->安装位置 如 "./tool/"
+//@return error->错误
+//算法：
+// - 检查安装位置，不存在则创建，创建失败返回error
+// - 同时检查官方源和CDN源，根据结果设置srcOK/cdnOK为true/false
+// - 根据 srcOK cdnOK srcVer cdnVer 决定安装方式
+//    - srcOK/cdnOK 均为false->返回error
+//    - srcOK/cdnOK true/false各一->直接下载
+//    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
+//      - 版本相等->同时下载直到某一个下载完成
+//      - srcVer > cdnVer -> 下载官方源
+//      - srcVer < cdnVer -> 返回error "cdn version is above source version"
+// - 根据 filename 和 format 安装下载好的文件
+//    - 压缩包->解压到"dir/工具名/"
+//    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) GetCliVersion() {
 
 }
 
 //解析Github的API，获得版本号和下载地址
+//@param string dir->安装位置 如 "./tool/"
+//@return error->错误
+//算法：
+// - 检查安装位置，不存在则创建，创建失败返回error
+// - 同时检查官方源和CDN源，根据结果设置srcOK/cdnOK为true/false
+// - 根据 srcOK cdnOK srcVer cdnVer 决定安装方式
+//    - srcOK/cdnOK 均为false->返回error
+//    - srcOK/cdnOK true/false各一->直接下载
+//    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
+//      - 版本相等->同时下载直到某一个下载完成
+//      - srcVer > cdnVer -> 下载官方源
+//      - srcVer < cdnVer -> 返回error "cdn version is above source version"
+// - 根据 filename 和 format 安装下载好的文件
+//    - 压缩包->解压到"dir/工具名/"
+//    - 非压缩包->移动到"dir/工具名/"
 func (t *tool) ParseGithubApi() {
 
 }
