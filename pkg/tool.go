@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-type tool struct {
+type Tool struct {
 	Name            string   //工具名
 	Path            string   //工具路径，包含工具名，安装&更新时按该路径操作
 	TakeOver		bool	 //工具更新是否由这里接管，false->用户自行更新
@@ -49,6 +49,24 @@ type GitHubLatest struct {
 	Assets  []Asset `json:"assets"`
 }
 
+func CreateTool() *Tool {
+	return &Tool{
+		Name: "",
+		Path: "",
+		TakeOver: false,
+		Version: "",
+		VersionApi: "",
+		VersionApiCDN: "",
+		DownloadLink: "",
+		DownloadLinkCDN: "",
+		VersionRegExp: "",
+		GithubRepo: "",
+		IsGitHub: false,
+		IsCLI: false,
+		KeyWords: []string{},
+	}
+}
+
 //安装/更新工具
 //@param 空
 //@return error->错误
@@ -67,7 +85,8 @@ type GitHubLatest struct {
 // - 根据 format 安装下载好的文件 isCompressed
 //    - 压缩包->解压到"dir/工具名/"
 //    - 非压缩包->移动到"dir/工具名/"
-func (t *tool) Install() error {
+//TODO 安装/更新好之后设置t的参数
+func (t *Tool) Install() error {
 	dir, _ := path.Split(t.Path)
 	if t.CheckExist() {
 		if t.TakeOver == false {
@@ -216,14 +235,14 @@ func (t *tool) Install() error {
 //检查更新
 //@param 空
 //@return error->错误
-func (t *tool) Update() error {
+func (t *Tool) Update() error {
 	return t.Install()
 }
 
 //检查工具是否存在
 //@param 空
 //@return bool->是否存在
-func (t *tool) CheckExist() bool {
+func (t *Tool) CheckExist() bool {
 	return IsFileExisted(t.Path)
 }
 
@@ -235,9 +254,9 @@ func (t *tool) CheckExist() bool {
 // - isCLI==false -> 返回error
 // - 调用工具但不加参数，获得输出
 // - 利用VersionRegExp获取版本号，获取失败则返回error
-func (t *tool) GetCliVersion() (ver string, err error) {
+func (t *Tool) GetCliVersion() (ver string, err error) {
 	if t.CheckExist() == false {
-		return "", errors.New("tool does not exist")
+		return "", errors.New("Tool does not exist")
 	}
 
 	if t.IsCLI == false {
@@ -261,7 +280,7 @@ func (t *tool) GetCliVersion() (ver string, err error) {
 //@param []byte json数据
 //@return ver->版本号, url->下载链接, error->错误
 //说明：string类型数据要转换成byte切片
-func (t *tool) ParseGithubApiData(jsonData []byte) (ver, url string, err error) {
+func (t *Tool) ParseGithubApiData(jsonData []byte) (ver, url string, err error) {
 	var latestInst GitHubLatest
 	var jsonX = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = jsonX.Unmarshal(jsonData, &latestInst)
@@ -303,7 +322,7 @@ func (t *tool) ParseGithubApiData(jsonData []byte) (ver, url string, err error) 
 //算法：
 // - 尝试获取切片格式的数据，出错则返回error
 // - 调用ParseGithubApiData
-func (t *tool) ParseGithubApi(api string) (ver, url string, err error) {
+func (t *Tool) ParseGithubApi(api string) (ver, url string, err error) {
 	jsonData, err := GetHttpDataByteSlice(api)
 	if err != nil {
 		return "", "", err
@@ -319,7 +338,7 @@ func (t *tool) ParseGithubApi(api string) (ver, url string, err error) {
 // - 利用tool.GithubRepo的用户名/仓库名得到api的链接
 // - 尝试获取切片格式的数据，出错则返回error
 // - 调用ParseGithubApiData
-func (t *tool) ParseGithubLatestRelease() (ver, url string, err error) {
+func (t *Tool) ParseGithubLatestRelease() (ver, url string, err error) {
 	jsonData, err := GetHttpDataByteSlice("https://api.github.com/repos/" + t.GithubRepo + "/releases/latest")
 	if err != nil {
 		return "", "", err

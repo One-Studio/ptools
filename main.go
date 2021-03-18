@@ -97,10 +97,25 @@ func testCompareVersion()  {
 	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2"))
 }
 
+func testTool()  {
+	//var t = tool.CreateTool()
+	var t = tool.Tool{
+
+	}
+
+	fmt.Println(t.Install())
+	fmt.Println("当前参数\n", t)
+	fmt.Println(t.CheckExist())
+	fmt.Println(t.GetCliVersion())
+	fmt.Println(t.Update())
+	fmt.Println("当前参数\n", t)
+}
+
 func main() {
 
 	tool.Test()
 
 	//testChan()
-	testWG()
+	//testWG()
+	testTool()
 }
