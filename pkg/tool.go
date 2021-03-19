@@ -16,7 +16,7 @@ import (
 type Tool struct {
 	Name            string   //工具名
 	Path            string   //工具路径，包含工具名，安装&更新时按该路径操作
-	TakeOver		bool	 //工具更新是否由这里接管，false->用户自行更新
+	TakeOver        bool     //工具更新是否由这里接管，false->用户自行更新
 	Version         string   //版本号
 	VersionApi      string   //获得版本号的官方 API
 	VersionApiCDN   string   //获得版本号的CDN API
@@ -27,6 +27,7 @@ type Tool struct {
 	IsGitHub        bool     //是否为GitHub地址
 	IsCLI           bool     //是否为命令行程序
 	KeyWords        []string //下载的文件的关键字
+	NonKeyWords		[]string //下载的文件不包含的关键字
 }
 
 //Github Asset
@@ -51,19 +52,19 @@ type GitHubLatest struct {
 
 func CreateTool() *Tool {
 	return &Tool{
-		Name: "",
-		Path: "",
-		TakeOver: false,
-		Version: "",
-		VersionApi: "",
-		VersionApiCDN: "",
-		DownloadLink: "",
+		Name:            "",
+		Path:            "",
+		TakeOver:        false,
+		Version:         "",
+		VersionApi:      "",
+		VersionApiCDN:   "",
+		DownloadLink:    "",
 		DownloadLinkCDN: "",
-		VersionRegExp: "",
-		GithubRepo: "",
-		IsGitHub: false,
-		IsCLI: false,
-		KeyWords: []string{},
+		VersionRegExp:   "",
+		GithubRepo:      "",
+		IsGitHub:        false,
+		IsCLI:           false,
+		KeyWords:        []string{},
 	}
 }
 
@@ -79,27 +80,26 @@ func CreateTool() *Tool {
 //    - srcOK/cdnOK 均为false->返回error
 //    - srcOK/cdnOK true/false各一->直接下载
 //    - srcOK/cdnOK 均为true->比较srcVer和cdnVer
-//      - 版本相等->同时下载直到某一个下载完成
+//      - 版本相等->先下载cdn源，失败->下载官方源 //同时下载直到某一个下载完成
 //      - srcVer > cdnVer -> 下载官方源
 //      - srcVer < cdnVer -> 返回error "cdn version is above source version"
 // - 根据 format 安装下载好的文件 isCompressed
 //    - 压缩包->解压到"dir/工具名/"
 //    - 非压缩包->移动到"dir/工具名/"
-//TODO 安装/更新好之后设置t的参数
 func (t *Tool) Install() error {
 	dir, _ := path.Split(t.Path)
 	if t.CheckExist() {
-		if t.TakeOver == false {
+		if !t.TakeOver {
 			fmt.Println("请用户自行更新工具")
 			return nil
 		}
 	} else {
-		if t.TakeOver {
+		if !t.TakeOver {
 			fmt.Println("用户自行更新但是工具不存在，下面尝试安装")
 		}
 
 		//检查安装位置
-		if !IsFileExisted(t.Path) {
+		if !IsFileExisted(dir) {
 			if err := os.Mkdir(dir, os.ModePerm); err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func (t *Tool) Install() error {
 	}
 
 	var srcVer, cdnVer, srcUrl, cdnUrl string
-	var srcOK, cdnOK  = false, false
+	var srcOK, cdnOK = false, false
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -151,57 +151,61 @@ func (t *Tool) Install() error {
 	wg.Wait()
 
 	//决定如何下载
-	var tempDir, url, filename string
+	var tempDir, tempVer, filename string
 	if srcOK && cdnOK && CompareVersion(srcVer, cdnVer) == 0 {
-		//并发下载
-		var c = make(chan string)
-		defer close(c)
-		go func() {
-			if tempName, err := GrabDownload("./temp/" + t.Name + "/src/", srcUrl); err != nil {
-				c <- ""
-			} else {
-				c <- "./temp/" + t.Name + "/src/" + tempName
-			}
-		}()
+		//判断是否要更新
+		if CompareVersion(t.Version, srcVer) == 0 {
+			return nil
+		}
 
-		go func() {
-			if tempName, err := GrabDownload("./temp/" + t.Name + "/cdn/", cdnUrl); err != nil {
-				c <- ""
-			} else {
-				c <- "./temp/" + t.Name + "/cdn/" + tempName
-			}
-		}()
+		tempVer = srcVer
+		//优先下载cdn源
+		if err := DownloadFile("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+			fmt.Println("cdn源下载失败，正在下载src源")
 
-		count := 0
-		for temp := range c {
-			if temp == "" {
-				count++
+			if err := DownloadFile("./temp/"+t.Name+"/src/", srcUrl); err != nil {
+				return err
 			} else {
-				tempDir, filename = path.Split(temp)
-				break
+				tempDir = FormatPath("./temp/"+t.Name+"/src/")
+				_, filename = path.Split(srcUrl)
 			}
-
-			if count > 1 {
-				return errors.New("failed to download from both src and cdn mirror")
-			}
+		} else {
+			tempDir = FormatPath("./temp/"+t.Name+"/cdn/")
+			_, filename = path.Split(cdnUrl)
 		}
 	} else {
+		var url string
 		if !srcOK && !cdnOK {
 			return errors.New("install/update failed on src and cdn mirror")
 		} else if srcOK && !cdnOK {
+			//判断是否要更新
+			if CompareVersion(t.Version, srcVer) == 0 {
+				return nil
+			}
 			//下载src
-			tempDir = "./temp/" + t.Name + "/src/"
+			tempDir = FormatPath("./temp/" + t.Name + "/src/")
+			tempVer = srcVer
 			url = srcUrl
 		} else if !srcOK && cdnOK {
+			//判断是否要更新
+			if CompareVersion(t.Version, cdnVer) == 0 {
+				return nil
+			}
 			//下载cdn
-			tempDir = "./temp/" + t.Name + "/cdn/"
+			tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
+			tempVer = cdnVer
 			url = cdnUrl
 		} else {
 			//两个源都OK 判断版本号
 			switch CompareVersion(srcVer, cdnVer) {
 			case 1:
+				//判断是否要更新
+				if CompareVersion(t.Version, srcVer) == 0 {
+					return nil
+				}
 				//下载src
-				tempDir = "./temp/" + t.Name + "/src/"
+				tempDir = FormatPath("./temp/" + t.Name + "/src/")
+				tempVer = srcVer
 				url = srcUrl
 			case -1:
 				//报错
@@ -216,20 +220,23 @@ func (t *Tool) Install() error {
 		}
 	}
 
+	fmt.Println(tempDir, tempVer, filename)
+
 	//判断文件类型
 	if IsCompressed(filename) {
 		//解压
-		if err := Decompress(tempDir + filename, dir); err != nil {
+		if err := Decompress(tempDir+filename, dir); err != nil {
 			return err
 		}
 	} else {
 		//直接转移
-		if err := XCopy(tempDir + filename, dir); err != nil {
+		if err := XCopy(tempDir+filename, dir); err != nil {
 			return err
 		}
 	}
 
-	return os.Remove("./temp/" + t.Name)
+	t.Version = tempVer
+	return os.RemoveAll("./temp/" + t.Name)
 }
 
 //检查更新
@@ -294,10 +301,22 @@ func (t *Tool) ParseGithubApiData(jsonData []byte) (ver, url string, err error) 
 		for _, file := range latestInst.Assets {
 			if file.State == "uploaded" {
 				ok := true
+
+				//过滤关键字
 				for _, keyword := range t.KeyWords {
 					if !strings.Contains(file.Name, keyword) {
 						ok = false
 						break
+					}
+				}
+
+				//过滤非关键字
+				if ok {
+					for _, nonkeyword := range t.NonKeyWords {
+						if strings.Contains(file.Name, nonkeyword) {
+							ok = false
+							break
+						}
 					}
 				}
 

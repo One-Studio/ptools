@@ -100,15 +100,28 @@ func testCompareVersion()  {
 func testTool()  {
 	//var t = tool.CreateTool()
 	var t = tool.Tool{
-
+		Name: "hlae",
+		Path: "./bin/hlae/hlae.exe",
+		TakeOver: true,
+		Version: "",
+		VersionApi: "",
+		VersionApiCDN: "https://cdn.jsdelivr.net/gh/One-Studio/HLAE-Archive@master/version",
+		DownloadLink: "",
+		DownloadLinkCDN: "https://cdn.jsdelivr.net/gh/One-Studio/HLAE-Archive@master/dist/hlae.zip",
+		VersionRegExp: "",
+		GithubRepo: "advancedfx/advancedfx",
+		IsGitHub: true,
+		IsCLI: false,
+		KeyWords: []string{"hlae", "zip"},
+		NonKeyWords: []string{".asc"},
 	}
 
 	fmt.Println(t.Install())
-	fmt.Println("当前参数\n", t)
-	fmt.Println(t.CheckExist())
-	fmt.Println(t.GetCliVersion())
-	fmt.Println(t.Update())
-	fmt.Println("当前参数\n", t)
+	fmt.Println("=====\n当前参数\n", t)
+	//fmt.Println(t.CheckExist())
+	//fmt.Println(t.GetCliVersion())
+	//fmt.Println(t.Update())
+	//fmt.Println("当前参数\n", t)
 }
 
 func main() {

@@ -56,7 +56,7 @@ func GetHttpDataByteSlice(url string) ([]byte, error) {
 }
 
 //下载文件 (下载地址，存放位置)
-func DownloadFile(url string, location string) error {
+func DownloadFile(location string, url string) error {
 	//利用HTTP下载文件并读取内容给data
 	resp, err := http.Get(url)
 	if err != nil {
@@ -326,7 +326,7 @@ func Unzip(zipFile string, to string) error {
 }
 
 //TODO 元素去重
-func RemoveRepeatElements(input []interface{}) []interface{} {
-
-	return input
-}
+//func RemoveRepeatElements(input []interface{}) []interface{} {
+//
+//	return input
+//}
