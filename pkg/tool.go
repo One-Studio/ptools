@@ -160,10 +160,11 @@ func (t *Tool) Install() error {
 
 		tempVer = srcVer
 		//优先下载cdn源
-		if err := DownloadFile("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+		if _, err := GrabDownload("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+			log.Println(err)
 			fmt.Println("cdn源下载失败，正在下载src源")
 
-			if err := DownloadFile("./temp/"+t.Name+"/src/", srcUrl); err != nil {
+			if _, err := GrabDownload("./temp/"+t.Name+"/src/", srcUrl); err != nil {
 				return err
 			} else {
 				tempDir = FormatPath("./temp/"+t.Name+"/src/")
@@ -220,11 +221,11 @@ func (t *Tool) Install() error {
 		}
 	}
 
-	fmt.Println(tempDir, tempVer, filename)
+	//fmt.Println(tempDir, tempVer, filename)
 
 	//判断文件类型
 	if IsCompressed(filename) {
-		//解压
+		//解压 TODO 移除根目录 考虑更换解压用的包
 		if err := Decompress(tempDir+filename, dir); err != nil {
 			return err
 		}

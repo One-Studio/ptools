@@ -55,7 +55,7 @@ func GetHttpDataByteSlice(url string) ([]byte, error) {
 	return data, nil
 }
 
-//下载文件 (下载地址，存放位置)
+//下载文件 (存放位置，下载地址) 可能有蜜汁问题，请用下面的GrabDownload
 func DownloadFile(location string, url string) error {
 	//利用HTTP下载文件并读取内容给data
 	resp, err := http.Get(url)

@@ -118,11 +118,34 @@ func testTool()  {
 
 	fmt.Println(t.Install())
 	fmt.Println("=====\n当前参数\n", t)
-	//fmt.Println(t.CheckExist())
-	//fmt.Println(t.GetCliVersion())
-	//fmt.Println(t.Update())
-	//fmt.Println("当前参数\n", t)
 }
+
+func testTool1()  {
+	var t = tool.Tool{
+		Name: "ffmpeg",
+		Path: "./bin/ffmpeg/ffmpeg.exe",
+		TakeOver: true,
+		Version: "",
+		VersionApi: "https://www.gyan.dev/ffmpeg/builds/release-version",
+		VersionApiCDN: "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/version",
+		DownloadLink: "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
+		DownloadLinkCDN: "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/dist/ffmpeg-release-essentials.7z",
+		VersionRegExp: "ffmpeg version (\\S+)-essentials_build-www.gyan.dev",
+		GithubRepo: "advancedfx/advancedfx",
+		IsGitHub: false,
+		IsCLI: true,
+		KeyWords: []string{},
+		NonKeyWords: []string{},
+	}
+
+	fmt.Println(t.Install())
+	fmt.Println("=====\n当前参数\n", t)
+	fmt.Println(t.CheckExist())
+	fmt.Println(t.GetCliVersion())
+	fmt.Println(t.Update())
+	fmt.Println("=====\n当前参数\n", t)
+}
+
 
 func main() {
 
@@ -131,4 +154,5 @@ func main() {
 	//testChan()
 	//testWG()
 	testTool()
+	testTool1()
 }
