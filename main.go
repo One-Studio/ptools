@@ -131,7 +131,7 @@ func testTool1()  {
 		DownloadLink: "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
 		DownloadLinkCDN: "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/dist/ffmpeg-release-essentials.7z",
 		VersionRegExp: "ffmpeg version (\\S+)-essentials_build-www.gyan.dev",
-		GithubRepo: "advancedfx/advancedfx",
+		GithubRepo: "",
 		IsGitHub: false,
 		IsCLI: true,
 		KeyWords: []string{},
@@ -153,6 +153,6 @@ func main() {
 
 	//testChan()
 	//testWG()
-	testTool()
+	//testTool()
 	testTool1()
 }
