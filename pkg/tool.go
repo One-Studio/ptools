@@ -28,6 +28,7 @@ type Tool struct {
 	IsCLI           bool     //是否为命令行程序
 	KeyWords        []string //下载的文件的关键字
 	NonKeyWords		[]string //下载的文件不包含的关键字
+	Fetch			string   //在压缩包解压得到的文件中取得某文件作为工具可执行文件
 }
 
 //Github Asset
@@ -225,13 +226,32 @@ func (t *Tool) Install() error {
 
 	//判断文件类型
 	if IsCompressed(filename) {
-		//解压 TODO 移除根目录 考虑更换解压用的包
-		if err := Decompress(tempDir+filename, dir); err != nil {
+		//解压
+		if err := Decompress(tempDir+filename, tempDir + "/temp"); err != nil {
 			return err
+		}
+
+		//TODO 移除根目录 考虑更换解压用的包
+
+
+		if t.Fetch == "" {
+			//转移文件
+			if err := XCopy(tempDir + "/temp", dir); err != nil {
+				return err
+			}
+		} else {
+			filepath := GetFilePathFromDir(tempDir + "/temp", t.Fetch)
+			if filepath == "" {
+				return errors.New("")
+			}
+
+			if err := XCopy(filepath, t.Path); err != nil {
+				return err
+			}
 		}
 	} else {
 		//直接转移
-		if err := XCopy(tempDir+filename, dir); err != nil {
+		if err := XCopy(tempDir+filename, t.Path); err != nil {
 			return err
 		}
 	}

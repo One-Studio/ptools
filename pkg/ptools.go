@@ -25,6 +25,11 @@ func Test() {
 	fmt.Println("Hello, world! It's ptools")
 }
 
+//import "github.com/gogf/gf/os/gcfg"
+//g.Cfg().SetFileName("config.json")
+//g.Cfg().Get("database")
+//g.Cfg().SetPath("/opt/config")
+
 //利用HTTP Get请求获得数据
 func GetHttpData(url string) (string, error) {
 	resp, err := http.Get(url)

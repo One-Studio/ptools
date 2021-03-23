@@ -146,6 +146,33 @@ func testTool1()  {
 	fmt.Println("=====\n当前参数\n", t)
 }
 
+func testXMove()  {
+	fmt.Println(tool.XMove("C:\\Users\\Purp1e\\go\\src\\github.com\\One-Studio\\ptools\\bin\\ffmpeg\\ffmpeg-release-essentials\\README.txt",
+		"C:\\Users\\Purp1e\\Desktop\\"))
+}
+
+func testDecomp1()  {
+	//去除顶层文件夹
+	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/ffmpeg")
+	if err != nil {
+		log.Println(err)
+	}
+
+	//TODO 核心操作
+
+
+	fmt.Println("得到的exe路径:", tool.GetFilePathFromDir("./temp/ffmpeg", "ffmpeg.exe"))
+}
+
+func testDecomp2()  {
+	//fetch binary
+	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/name")
+	if err != nil {
+		log.Println(err)
+	}
+
+
+}
 
 func main() {
 
@@ -153,6 +180,9 @@ func main() {
 
 	//testChan()
 	//testWG()
-	testTool()
-	testTool1()
+	//testTool()
+	//testTool1()
+	//testXMove()
+	testDecomp1()
+	//testDecomp2()
 }
