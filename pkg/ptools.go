@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -231,17 +232,44 @@ func IsCompressed(file string) bool {
 //解压zip 7z rar tar
 func Decompress(from string, to string) error {
 	a, err := unarr.NewArchive(from)
+
 	if err != nil {
 		return err
 	}
 	defer a.Close()
 
 	_, err = a.Extract(to)
+	return err
+}
+
+//可解压包含中文路径的压缩包
+func SafeDecompress(from string, to string) error {
+	_, filename := path.Split(from)
+	ext := path.Ext(filename)
+	randStr := "_temp" + strconv.Itoa(rand.Int())
+	if IsNonASCII(from) {
+		if err := os.MkdirAll("./" +randStr, os.ModePerm); err != nil {
+			return err
+		}
+
+		if err := XCopy(from, "./"+randStr+ "/" +randStr+ ext); err != nil {
+			fmt.Println(err)
+		}
+
+		from = "./"+ randStr + "/" + randStr + ext
+	}
+
+	a, err := unarr.NewArchive(from)
 	if err != nil {
 		return err
 	}
 
-	return nil
+	if _, err = a.Extract(to); err != nil {
+		return err
+	}
+
+	a.Close()
+	return os.RemoveAll("./" + randStr)
 }
 
 //Zip压缩

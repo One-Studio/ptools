@@ -134,16 +134,13 @@ func testTool1() {
 		GithubRepo:      "",
 		IsGitHub:        false,
 		IsCLI:           true,
-		KeyWords:        []string{},
-		NonKeyWords:     []string{},
+		Fetch:           "",
+		//Fetch:           "ffmpeg.exe",
 	}
 
-	fmt.Println(t.Install())
-	fmt.Println("=====\n当前参数\n", t)
-	fmt.Println(t.CheckExist())
-	fmt.Println(t.GetCliVersion())
-	fmt.Println(t.Update())
-	fmt.Println("=====\n当前参数\n", t)
+	if err := t.Install(); err != nil {
+		fmt.Println(err)
+	}
 }
 
 func testXMove() {
@@ -153,23 +150,32 @@ func testXMove() {
 
 func testDecomp1() {
 	//去除顶层文件夹
-	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/ffmpeg")
+	//_ = os.MkdirAll("./temp/ffmpeg", os.ModePerm)
+	tempDir := "./bin/"
+	filename := "你好.7z"
+
+	to := "./temp/ffmpeg"
+
+	err := tool.SafeDecompress(tempDir+filename, to)
 	if err != nil {
 		log.Println(err)
 	}
 
 	//TODO 核心操作
 
-	fmt.Println("得到的exe路径:", tool.GetFilePathFromDir("./temp/ffmpeg", "ffmpeg.exe"))
+
+
+	//fmt.Println("得到的exe路径:", tool.GetFilePathFromDir("./temp/hlae", "AfxHook.dat"))
+	////temp\ffmpeg\AfxHook.dat
+	//_ = tool.XMove("temp\\hlae\\AfxHook.dat", "D:\\afx.dat")
 }
 
 func testDecomp2() {
 	//fetch binary
-	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/name")
-	if err != nil {
-		log.Println(err)
+	ok, path := tool.CheckTopDir("./bin/ffmpeg")
+	if ok {
+		fmt.Println(path)
 	}
-
 }
 
 func main() {
@@ -181,6 +187,6 @@ func main() {
 	//testTool()
 	//testTool1()
 	//testXMove()
-	testDecomp1()
+	//testDecomp1()
 	//testDecomp2()
 }

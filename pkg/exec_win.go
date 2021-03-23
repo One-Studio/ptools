@@ -13,9 +13,22 @@ import (
 	"syscall"
 )
 
-//执行一次command指令
-func Exec(command string) (output string, err error) {
+//执行一次command指令 经过cmd
+func CMD(command string) (output string, err error) {
 	cmd := exec.Command("cmd.exe", "/c", command)
+
+	//隐藏黑框 !仅win下用
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+	out, err := cmd.CombinedOutput()
+	return string(out), err
+}
+
+//执行一次command指令 直接调用
+func Exec(command string) (output string, err error) {
+	cmdArgs := strings.Fields(command)
+	//fmt.Println(cmdArgs)
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -76,7 +89,7 @@ func ExecRealtimePrintGBK(command string) error {
 
 //查找（环境变量+当前位置）可执行文件的位置
 func GetBinaryPath(binary string) (string, error) {
-	dir, err := Exec("where " + binary)
+	dir, err := CMD("where " + binary)
 	dir = strings.TrimSpace(dir)
 	return dir, err
 }
@@ -90,7 +103,7 @@ func ExecRealtimeControl(command string, method func(line string), signal chan r
 	//cmd := exec.Command("cmd.exe", "/c", command)
 	//实时控制要直接执行程序，不然获取的是cmd.exe，没法挂起
 	cmdArgs := strings.Fields(command)
-	fmt.Println(cmdArgs)
+	//fmt.Println(cmdArgs)
 	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 
 	//隐藏黑框 !仅win下用
@@ -126,14 +139,14 @@ func ExecRealtimeControl(command string, method func(line string), signal chan r
 			case 'p':
 				//暂停
 				fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := Exec(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := CMD(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}
 			case 'r':
 				//继续
 				fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := Exec(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := CMD(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}

@@ -75,6 +75,60 @@ func Getwd() (wd string) {
 }
 
 //去除顶层文件夹
+func CheckTopDir(dir string) (bool, string) {
+	var paths []string
+	var isDirs []bool
+	first := true
+	slashCount, t := 6657, 0
+	var splt string
+	if runtime.GOOS == "windows" {
+		splt = "\\"
+	} else {
+		splt = "/"
+	}
+
+	//获取最高层的文件/文件夹 O(n)
+	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+		if f == nil {
+			return err
+		}
+		
+		if first {
+			first = false
+			return nil
+		}
+
+		path = FormatPath(path)
+
+		if t = strings.Count(path, splt); t < slashCount {
+			paths = nil
+			isDirs = nil
+			slashCount = t
+		}
+		if t == slashCount {
+			paths = append(paths, path)
+			if f.IsDir() {
+				isDirs = append(isDirs, true)
+			} else {
+				isDirs = append(isDirs, false)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Printf("error when filepath.Walk(): %v\n", err)
+	}
+
+	//分析得出结果
+	if len(paths) == 1 {
+		if isDirs[0] {
+			return true, paths[0]
+		}
+	}
+
+	return false, ""
+}
 
 //遍历寻找某个文件
 func GetFilePathFromDir(dir, name string) (result string) {

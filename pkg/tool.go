@@ -3,7 +3,6 @@ package ptools
 import (
 	"errors"
 	"fmt"
-	"log"
 	"path"
 	"regexp"
 	"sync"
@@ -54,23 +53,23 @@ type GitHubLatest struct {
 	Assets  []Asset `json:"assets"`
 }
 
-func CreateTool() *Tool {
-	return &Tool{
-		Name:            "",
-		Path:            "",
-		TakeOver:        false,
-		Version:         "",
-		VersionApi:      "",
-		VersionApiCDN:   "",
-		DownloadLink:    "",
-		DownloadLinkCDN: "",
-		VersionRegExp:   "",
-		GithubRepo:      "",
-		IsGitHub:        false,
-		IsCLI:           false,
-		KeyWords:        []string{},
-	}
-}
+//func CreateTool() *Tool {
+//	return &Tool{
+//		Name:            "",
+//		Path:            "",
+//		TakeOver:        false,
+//		Version:         "",
+//		VersionApi:      "",
+//		VersionApiCDN:   "",
+//		DownloadLink:    "",
+//		DownloadLinkCDN: "",
+//		VersionRegExp:   "",
+//		GithubRepo:      "",
+//		IsGitHub:        false,
+//		IsCLI:           false,
+//		KeyWords:        []string{},
+//	}
+//}
 
 //安装/更新工具
 //@param 空
@@ -128,7 +127,7 @@ func (t *Tool) Install() error {
 		} else {
 			//利用版本号API获得官方源版本
 			if data, err := GetHttpData(t.VersionApi); err != nil {
-				log.Println(err)
+				//log.Println(err)
 				srcOK = false
 			} else {
 				srcVer = data
@@ -143,7 +142,7 @@ func (t *Tool) Install() error {
 		defer wg.Done()
 		//获取CDN源版本和下载地址
 		if data, err := GetHttpData(t.VersionApiCDN); err != nil {
-			log.Println(err)
+			//log.Println(err)
 			cdnOK = false
 		} else {
 			cdnVer = data
@@ -235,12 +234,21 @@ func (t *Tool) Install() error {
 	//判断文件类型
 	if IsCompressed(filename) {
 		//解压
-		if err := Decompress(tempDir+filename, tempDir+"/temp"); err != nil {
+		if err := SafeDecompress(tempDir+filename, tempDir+"temp"); err != nil {
+			fmt.Println(tempDir+filename, " -> ", tempDir+"temp")
 			return err
 		}
 
-		//TODO 移除根目录 考虑更换解压用的包
+		//移除根目录
+		ok, topDir := CheckTopDir(tempDir+"temp")
+		fmt.Println("ok=", ok, "topDir=", topDir)
+		if ok {
+			_ = os.Rename(topDir, tempDir+"temp_swap")
+			_ = os.RemoveAll(tempDir+"temp")
+			_ = os.Rename(tempDir+"temp_swap", tempDir+"temp")
+		}
 
+		//根据Fetch从临时文件夹中取文件
 		if t.Fetch == "" {
 			//转移文件
 			if err := XCopy(tempDir+"/temp", dir); err != nil {
@@ -249,7 +257,7 @@ func (t *Tool) Install() error {
 		} else {
 			filepath := GetFilePathFromDir(tempDir+"/temp", t.Fetch)
 			if filepath == "" {
-				return errors.New("")
+				return errors.New("cannot find the file to fetch")
 			}
 
 			if err := XCopy(filepath, t.Path); err != nil {
@@ -265,6 +273,7 @@ func (t *Tool) Install() error {
 
 	t.Version = tempVer
 	return os.RemoveAll("./temp/" + t.Name)
+	//return nil
 }
 
 //检查更新
@@ -281,6 +290,19 @@ func (t *Tool) CheckExist() bool {
 	return IsFileExisted(t.Path)
 }
 
+//检查环境变量，有就设置Path和TakeOver=False，尝试获取Version
+func (t *Tool) CheckEnvPath() bool {
+	if _, err := Exec(t.Name); err != nil {
+		return false
+	}
+
+	t.TakeOver = false
+	t.Path = t.Name
+	_ = t.SetCliVersion()
+
+	return true
+}
+
 //获取命令行工具的版本号
 //@param 空
 //@return string ver->版本号, error->错误
@@ -291,24 +313,34 @@ func (t *Tool) CheckExist() bool {
 // - 利用VersionRegExp获取版本号，获取失败则返回error
 func (t *Tool) GetCliVersion() (ver string, err error) {
 	if t.CheckExist() == false {
-		return "", errors.New("Tool does not exist")
+		return "", errors.New("tool does not exist")
 	}
 
 	if t.IsCLI == false {
 		return "", errors.New("it is not a cli program")
 	}
 
-	output, err := Exec(t.Path)
+	output, _ := Exec(t.Path)
+	re, err := regexp.Compile(t.VersionRegExp)
 	if err != nil {
-		return
-	} else {
-		re, err := regexp.Compile(t.VersionRegExp)
-		if err != nil {
-			return "", err
-		}
-
-		return re.FindString(output), nil
+		return "", err
 	}
+	str := re.FindStringSubmatch(output)
+	if len(str) < 2 {
+		return "", errors.New("failed to match version string of tool: " + t.Name)
+	}
+	return str[1], nil
+}
+
+//设置命令行版本号
+func (t *Tool) SetCliVersion() error {
+	ver, err := t.GetCliVersion()
+	if err != nil {
+		return err
+	}
+
+	t.Version = ver
+	return nil
 }
 
 //解析从Github的API得到的json数据，获得版本号和下载地址

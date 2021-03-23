@@ -11,8 +11,18 @@ import (
 )
 
 //执行一次command指令 跨平台兼容
-func Exec(command string) (output string, err error) {
+func CMD(command string) (output string, err error) {
 	cmd := exec.Command("/bin/bash", "-c", command)
+
+	out, err := cmd.CombinedOutput()
+	return string(out), err
+}
+
+//执行一次command指令 直接调用
+func Exec(command string) (output string, err error) {
+	cmdArgs := strings.Fields(command)
+	//fmt.Println(cmdArgs)
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 
 	out, err := cmd.CombinedOutput()
 	return string(out), err
@@ -66,7 +76,7 @@ func ExecRealtimePrintGBK(command string) error {
 
 //查找（环境变量+当前位置）可执行文件的位置
 func GetBinaryPath(binary string) (string, error) {
-	dir, err := Exec("which " + binary)
+	dir, err := CMD("which " + binary)
 	dir = strings.TrimSpace(dir)
 	return dir, err
 }
