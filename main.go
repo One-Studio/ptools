@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	tool "github.com/One-Studio/ptools/pkg"
-	"github.com/cavaliercoder/grab"
 	"log"
 	"sync"
 	"time"
+
+	tool "github.com/One-Studio/ptools/pkg"
+	"github.com/cavaliercoder/grab"
 )
 
-func test1()  {
+func test1() {
 	//ffcommand := "ffmpeg -i ~/movies/演示找A卡驱动.mp4 -c:v libx264 -crf 26 -preset 3 -c:a copy ~/测试.mp4 -y"
 	ffcommand := "E:/测试/ffmpeg.exe -i E:/测试/测试ff.mp4 -c:v libx264 -crf 26 -preset 3 -c:a copy E:/测试/结果.mp4 -y"
 	suspend := "C:\\Users\\Purp1e\\go\\src\\github.com\\One-Studio\\ptools\\temp\\pssuspend.exe"
@@ -17,13 +18,13 @@ func test1()  {
 	a := make(chan rune)
 	defer close(a)
 	go func() {
-		time.Sleep(time.Second *1)
+		time.Sleep(time.Second * 1)
 		fmt.Println("触发暂停")
 		tool.Pause(a)
-		time.Sleep(time.Second *2)
+		time.Sleep(time.Second * 2)
 		fmt.Println("触发继续")
 		tool.Resume(a)
-		time.Sleep(time.Second *2)
+		time.Sleep(time.Second * 2)
 		fmt.Println("触发结束")
 		tool.Quit(a)
 	}()
@@ -38,7 +39,7 @@ func test1()  {
 
 }
 
-func testGrab()  {
+func testGrab() {
 	//https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/download_link
 	resp, err := grab.Get(".", "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/download_link")
 	if err != nil {
@@ -48,7 +49,7 @@ func testGrab()  {
 	fmt.Println("Download saved to", resp.Filename)
 }
 
-func testChan()  {
+func testChan() {
 	value := ""
 	var c = make(chan string)
 	defer close(c)
@@ -64,14 +65,13 @@ func testChan()  {
 		c <- "2"
 	}()
 
-
-	fmt.Println("测试结束", <- c)
+	fmt.Println("测试结束", <-c)
 	time.Sleep(time.Second)
-	fmt.Println("测试结束", <- c)
+	fmt.Println("测试结束", <-c)
 
 }
 
-func testWG()  {
+func testWG() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -89,7 +89,7 @@ func testWG()  {
 	time.Sleep(time.Second)
 }
 
-func testCompareVersion()  {
+func testCompareVersion() {
 	fmt.Println(tool.CompareVersion("v1.0.1-alpha", "v1.0.2-aa"))
 	fmt.Println(tool.CompareVersion("a1.0.1", "v2.0.0-alpha.47"))
 	fmt.Println(tool.CompareVersion("z1.0.1", "v2.0.0-alpha.47"))
@@ -97,45 +97,45 @@ func testCompareVersion()  {
 	fmt.Println(tool.CompareVersion("v1.2.3", "v1.2"))
 }
 
-func testTool()  {
+func testTool() {
 	//var t = tool.CreateTool()
 	var t = tool.Tool{
-		Name: "hlae",
-		Path: "./bin/hlae/hlae.exe",
-		TakeOver: true,
-		Version: "",
-		VersionApi: "",
-		VersionApiCDN: "https://cdn.jsdelivr.net/gh/One-Studio/HLAE-Archive@master/version",
-		DownloadLink: "",
+		Name:            "hlae",
+		Path:            "./bin/hlae/hlae.exe",
+		TakeOver:        true,
+		Version:         "",
+		VersionApi:      "",
+		VersionApiCDN:   "https://cdn.jsdelivr.net/gh/One-Studio/HLAE-Archive@master/version",
+		DownloadLink:    "",
 		DownloadLinkCDN: "https://cdn.jsdelivr.net/gh/One-Studio/HLAE-Archive@master/dist/hlae.zip",
-		VersionRegExp: "",
-		GithubRepo: "advancedfx/advancedfx",
-		IsGitHub: true,
-		IsCLI: false,
-		KeyWords: []string{"hlae", "zip"},
-		NonKeyWords: []string{".asc"},
+		VersionRegExp:   "",
+		GithubRepo:      "advancedfx/advancedfx",
+		IsGitHub:        true,
+		IsCLI:           false,
+		KeyWords:        []string{"hlae", "zip"},
+		NonKeyWords:     []string{".asc"},
 	}
 
 	fmt.Println(t.Install())
 	fmt.Println("=====\n当前参数\n", t)
 }
 
-func testTool1()  {
+func testTool1() {
 	var t = tool.Tool{
-		Name: "ffmpeg",
-		Path: "./bin/ffmpeg/ffmpeg.exe",
-		TakeOver: true,
-		Version: "",
-		VersionApi: "https://www.gyan.dev/ffmpeg/builds/release-version",
-		VersionApiCDN: "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/version",
-		DownloadLink: "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
+		Name:            "ffmpeg",
+		Path:            "./bin/ffmpeg/ffmpeg.exe",
+		TakeOver:        true,
+		Version:         "",
+		VersionApi:      "https://www.gyan.dev/ffmpeg/builds/release-version",
+		VersionApiCDN:   "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/version",
+		DownloadLink:    "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.7z",
 		DownloadLinkCDN: "https://cdn.jsdelivr.net/gh/One-Studio/FFmpeg-Win64@master/dist/ffmpeg-release-essentials.7z",
-		VersionRegExp: "ffmpeg version (\\S+)-essentials_build-www.gyan.dev",
-		GithubRepo: "advancedfx/advancedfx",
-		IsGitHub: false,
-		IsCLI: true,
-		KeyWords: []string{},
-		NonKeyWords: []string{},
+		VersionRegExp:   "ffmpeg version (\\S+)-essentials_build-www.gyan.dev",
+		GithubRepo:      "",
+		IsGitHub:        false,
+		IsCLI:           true,
+		KeyWords:        []string{},
+		NonKeyWords:     []string{},
 	}
 
 	fmt.Println(t.Install())
@@ -146,12 +146,12 @@ func testTool1()  {
 	fmt.Println("=====\n当前参数\n", t)
 }
 
-func testXMove()  {
+func testXMove() {
 	fmt.Println(tool.XMove("C:\\Users\\Purp1e\\go\\src\\github.com\\One-Studio\\ptools\\bin\\ffmpeg\\ffmpeg-release-essentials\\README.txt",
 		"C:\\Users\\Purp1e\\Desktop\\"))
 }
 
-func testDecomp1()  {
+func testDecomp1() {
 	//去除顶层文件夹
 	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/ffmpeg")
 	if err != nil {
@@ -160,17 +160,15 @@ func testDecomp1()  {
 
 	//TODO 核心操作
 
-
 	fmt.Println("得到的exe路径:", tool.GetFilePathFromDir("./temp/ffmpeg", "ffmpeg.exe"))
 }
 
-func testDecomp2()  {
+func testDecomp2() {
 	//fetch binary
 	err := tool.Decompress("E:\\ffmpeg压缩包.7z", "./temp/name")
 	if err != nil {
 		log.Println(err)
 	}
-
 
 }
 

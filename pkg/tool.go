@@ -7,10 +7,13 @@ import (
 	"path"
 	"regexp"
 	"sync"
+	"time"
+
 	//"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"os"
 	"strings"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 type Tool struct {
@@ -27,8 +30,8 @@ type Tool struct {
 	IsGitHub        bool     //是否为GitHub地址
 	IsCLI           bool     //是否为命令行程序
 	KeyWords        []string //下载的文件的关键字
-	NonKeyWords		[]string //下载的文件不包含的关键字
-	Fetch			string   //在压缩包解压得到的文件中取得某文件作为工具可执行文件
+	NonKeyWords     []string //下载的文件不包含的关键字
+	Fetch           string   //在压缩包解压得到的文件中取得某文件作为工具可执行文件
 }
 
 //Github Asset
@@ -101,7 +104,7 @@ func (t *Tool) Install() error {
 
 		//检查安装位置
 		if !IsFileExisted(dir) {
-			if err := os.Mkdir(dir, os.ModePerm); err != nil {
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 				return err
 			}
 		}
@@ -162,17 +165,22 @@ func (t *Tool) Install() error {
 		tempVer = srcVer
 		//优先下载cdn源
 		if _, err := GrabDownload("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
-			log.Println(err)
-			fmt.Println("cdn源下载失败，正在下载src源")
-
-			if _, err := GrabDownload("./temp/"+t.Name+"/src/", srcUrl); err != nil {
-				return err
+			fmt.Println("cdn源下载失败，再尝试一次...")
+			time.Sleep(time.Second * 2)
+			if _, err := GrabDownload("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+				fmt.Println("cdn源下载失败，正在下载src源")
+				if _, err := GrabDownload("./temp/"+t.Name+"/src/", srcUrl); err != nil {
+					return err
+				} else {
+					tempDir = FormatPath("./temp/" + t.Name + "/src/")
+					_, filename = path.Split(srcUrl)
+				}
 			} else {
-				tempDir = FormatPath("./temp/"+t.Name+"/src/")
-				_, filename = path.Split(srcUrl)
+				tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
+				_, filename = path.Split(cdnUrl)
 			}
 		} else {
-			tempDir = FormatPath("./temp/"+t.Name+"/cdn/")
+			tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
 			_, filename = path.Split(cdnUrl)
 		}
 	} else {
@@ -227,20 +235,19 @@ func (t *Tool) Install() error {
 	//判断文件类型
 	if IsCompressed(filename) {
 		//解压
-		if err := Decompress(tempDir+filename, tempDir + "/temp"); err != nil {
+		if err := Decompress(tempDir+filename, tempDir+"/temp"); err != nil {
 			return err
 		}
 
 		//TODO 移除根目录 考虑更换解压用的包
 
-
 		if t.Fetch == "" {
 			//转移文件
-			if err := XCopy(tempDir + "/temp", dir); err != nil {
+			if err := XCopy(tempDir+"/temp", dir); err != nil {
 				return err
 			}
 		} else {
-			filepath := GetFilePathFromDir(tempDir + "/temp", t.Fetch)
+			filepath := GetFilePathFromDir(tempDir+"/temp", t.Fetch)
 			if filepath == "" {
 				return errors.New("")
 			}

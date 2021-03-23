@@ -81,7 +81,7 @@ func DownloadFile(location string, url string) error {
 	_, fileName := path.Split(url)
 	ok := IsFileExisted(location)
 	if ok == false {
-		err := os.Mkdir(location, os.ModePerm)
+		err := os.MkdirAll(location, os.ModePerm)
 		if err != nil {
 			return err
 		}

@@ -18,7 +18,7 @@ func FormatPath(s string) string {
 	} else {
 		s = strings.Replace(s, "\\", "/", -1)
 	}
-	return path.Clean(s)
+	return s
 }
 
 //规格化到绝对路径
