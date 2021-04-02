@@ -13,16 +13,9 @@ import (
 	"syscall"
 )
 
-//执行一次command指令 直接调用
+//执行一次command指令 经过cmd
 func CMD(command string) (output string, err error) {
-	cmdArgs := strings.Fields(command)
-
-	return CmdArgs(cmdArgs)
-}
-
-//参数以切片形式存放
-func CmdArgs(args []string) (output string, err error) {
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command("cmd.exe", "/c", command)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -31,10 +24,9 @@ func CmdArgs(args []string) (output string, err error) {
 	return string(out), err
 }
 
-
-//执行一次command指令 经过cmd
-func Exec(command string) (output string, err error) {
-	cmd := exec.Command("cmd.exe", "/c", command)
+//参数以切片形式存放
+func ExecArgs(args []string) (output string, err error) {
+	cmd := exec.Command(args[0], args[1:]...)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -79,31 +71,11 @@ func ExecRealtime(command string, method func(line string)) error {
 	return cmd.Wait()
 }
 
-//执行一次command指令且实时输出每行结果
-func ExecRealtimePrint(command string) error {
-	return ExecRealtime(command, func(line string) {
-		fmt.Println(line)
-	})
-}
-
-//执行时实时输出每行并解决cmd chcp 936 输出乱码问题
-func ExecRealtimePrintGBK(command string) error {
-	return ExecRealtime(command, func(line string) {
-		fmt.Println(ConvertString(line))
-	})
-}
-
 //查找（环境变量+当前位置）可执行文件的位置
 func GetBinaryPath(binary string) (string, error) {
-	dir, err := Exec("where " + binary)
+	dir, err := CMD("where " + binary)
 	dir = strings.TrimSpace(dir)
 	return dir, err
-}
-
-//windows要用winPssuspend.exe 需指定其路径
-func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
-	cmdArgs := strings.Fields(command)
-	return ExecRealtimeControlArgs(cmdArgs, method, signal, winPssuspend)
 }
 
 //参数以切片形式存放
@@ -147,14 +119,14 @@ func ExecRealtimeControlArgs(args []string, method func(line string), signal cha
 			case 'p':
 				//暂停
 				fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := Exec(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := CMD(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}
 			case 'r':
 				//继续
 				fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := Exec(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := CMD(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}
@@ -166,19 +138,4 @@ func ExecRealtimeControlArgs(args []string, method func(line string), signal cha
 	}()
 
 	return cmd.Wait()
-}
-
-//实时控制的时候暂停
-func Pause(a chan rune)  {
-	a <- 'p'
-}
-
-//实时控制的时候继续
-func Resume(a chan rune)  {
-	a <- 'r'
-}
-
-//实时控制的时候结束
-func Quit(a chan rune)  {
-	a <- 'q'
 }

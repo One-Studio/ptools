@@ -195,7 +195,7 @@ func testFFmpeg()  {
 		"C:\\Users\\Purp1e\\Videos\\sb战术_encode.mp4",
 	}
 
-	if out, err := tool.CmdArgs(command); err != nil {
+	if out, err := tool.ExecArgs(command); err != nil {
 		fmt.Println(err)
 	} else {
 		fmt.Println(out)
