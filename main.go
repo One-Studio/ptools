@@ -170,7 +170,7 @@ func testDecomp1() {
 	//_ = tool.XMove("temp\\hlae\\AfxHook.dat", "D:\\afx.dat")
 }
 
-func testDecomp2() {
+func testTopDir() {
 	//fetch binary
 	ok, path := tool.CheckTopDir("./bin/ffmpeg")
 	if ok {
@@ -178,15 +178,45 @@ func testDecomp2() {
 	}
 }
 
+
+
+//TODO 测试完这个，win平台的几个工具就能用了
+func testFFmpeg()  {
+	command := []string{
+		"bin\\ffmpeg.exe",
+		"-i",
+		"C:\\Users\\Purp1e\\Videos\\sb战术.mp4",
+		"-vcodec",
+		"libx264",
+		"-crf",
+		"20",
+		"-preset",
+		"slow",
+		"C:\\Users\\Purp1e\\Videos\\sb战术_encode.mp4",
+	}
+
+	if out, err := tool.CmdArgs(command); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(out)
+	}
+	//	func(line string) {
+	//		fmt.Println(line)
+	//	}); err != nil {
+	//	fmt.Println(err)
+	//}
+}
+
 func main() {
 
 	tool.Test()
 
+	testFFmpeg()
 	//testChan()
 	//testWG()
 	//testTool()
 	//testTool1()
 	//testXMove()
 	//testDecomp1()
-	//testDecomp2()
+	//testTopDir()
 }

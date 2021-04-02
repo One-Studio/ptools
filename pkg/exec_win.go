@@ -13,9 +13,16 @@ import (
 	"syscall"
 )
 
-//执行一次command指令 经过cmd
+//执行一次command指令 直接调用
 func CMD(command string) (output string, err error) {
-	cmd := exec.Command("cmd.exe", "/c", command)
+	cmdArgs := strings.Fields(command)
+
+	return CmdArgs(cmdArgs)
+}
+
+//参数以切片形式存放
+func CmdArgs(args []string) (output string, err error) {
+	cmd := exec.Command(args[0], args[1:]...)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -24,11 +31,10 @@ func CMD(command string) (output string, err error) {
 	return string(out), err
 }
 
-//执行一次command指令 直接调用
+
+//执行一次command指令 经过cmd
 func Exec(command string) (output string, err error) {
-	cmdArgs := strings.Fields(command)
-	//fmt.Println(cmdArgs)
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd := exec.Command("cmd.exe", "/c", command)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -89,22 +95,24 @@ func ExecRealtimePrintGBK(command string) error {
 
 //查找（环境变量+当前位置）可执行文件的位置
 func GetBinaryPath(binary string) (string, error) {
-	dir, err := CMD("where " + binary)
+	dir, err := Exec("where " + binary)
 	dir = strings.TrimSpace(dir)
 	return dir, err
 }
 
 //windows要用winPssuspend.exe 需指定其路径
 func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
+	cmdArgs := strings.Fields(command)
+	return ExecRealtimeControlArgs(cmdArgs, method, signal, winPssuspend)
+}
+
+//参数以切片形式存放
+func ExecRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
 	if exist := IsFileExisted(winPssuspend); !exist {
 		return errors.New("pssuspend.exe does not exist. check path string")
 	}
 
-	//cmd := exec.Command("cmd.exe", "/c", command)
-	//实时控制要直接执行程序，不然获取的是cmd.exe，没法挂起
-	cmdArgs := strings.Fields(command)
-	//fmt.Println(cmdArgs)
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	cmd := exec.Command(args[0], args[1:]...)
 
 	//隐藏黑框 !仅win下用
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -139,14 +147,14 @@ func ExecRealtimeControl(command string, method func(line string), signal chan r
 			case 'p':
 				//暂停
 				fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := CMD(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := Exec(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}
 			case 'r':
 				//继续
 				fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := CMD(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				if _, err := Exec(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
 					//log.Println(out)
 					log.Println(err)
 				}

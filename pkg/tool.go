@@ -241,7 +241,7 @@ func (t *Tool) Install() error {
 
 		//移除根目录
 		ok, topDir := CheckTopDir(tempDir+"temp")
-		fmt.Println("ok=", ok, "topDir=", topDir)
+		//fmt.Println("ok=", ok, "topDir=", topDir)
 		if ok {
 			_ = os.Rename(topDir, tempDir+"temp_swap")
 			_ = os.RemoveAll(tempDir+"temp")
@@ -292,7 +292,7 @@ func (t *Tool) CheckExist() bool {
 
 //检查环境变量，有就设置Path和TakeOver=False，尝试获取Version
 func (t *Tool) CheckEnvPath() bool {
-	if _, err := Exec(t.Name); err != nil {
+	if _, err := CMD(t.Name); err != nil {
 		return false
 	}
 
@@ -320,7 +320,7 @@ func (t *Tool) GetCliVersion() (ver string, err error) {
 		return "", errors.New("it is not a cli program")
 	}
 
-	output, _ := Exec(t.Path)
+	output, _ := CMD(t.Path)
 	re, err := regexp.Compile(t.VersionRegExp)
 	if err != nil {
 		return "", err

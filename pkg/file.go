@@ -74,60 +74,76 @@ func Getwd() (wd string) {
 	return
 }
 
-//去除顶层文件夹
+//去除顶层文件夹 TODO 借鉴ListDir只能获取一级目录 优化算法
 func CheckTopDir(dir string) (bool, string) {
-	var paths []string
-	var isDirs []bool
-	first := true
-	slashCount, t := 6657, 0
-	var splt string
-	if runtime.GOOS == "windows" {
-		splt = "\\"
-	} else {
-		splt = "/"
-	}
-
-	//获取最高层的文件/文件夹 O(n)
-	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
-		if f == nil {
-			return err
-		}
-		
-		if first {
-			first = false
-			return nil
-		}
-
-		path = FormatPath(path)
-
-		if t = strings.Count(path, splt); t < slashCount {
-			paths = nil
-			isDirs = nil
-			slashCount = t
-		}
-		if t == slashCount {
-			paths = append(paths, path)
-			if f.IsDir() {
-				isDirs = append(isDirs, true)
-			} else {
-				isDirs = append(isDirs, false)
-			}
-		}
-
-		return nil
-	})
+	res, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Printf("error when filepath.Walk(): %v\n", err)
+		log.Printf("failed to read dir: %v\n", err)
+		return false, ""
 	}
-
-	//分析得出结果
-	if len(paths) == 1 {
-		if isDirs[0] {
-			return true, paths[0]
+	
+	if len(res) == 1 {
+		if res[0].IsDir() {
+			return true, dir + "/" + res[0].Name()
 		}
 	}
 
 	return false, ""
+
+
+
+	//var paths []string
+	//var isDirs []bool
+	//first := true
+	//slashCount, t := 6657, 0
+	//var splt string
+	//if runtime.GOOS == "windows" {
+	//	splt = "\\"
+	//} else {
+	//	splt = "/"
+	//}
+	//
+	////获取最高层的文件/文件夹 O(n)
+	//err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+	//	if f == nil {
+	//		return err
+	//	}
+	//	
+	//	if first {
+	//		first = false
+	//		return nil
+	//	}
+	//
+	//	path = FormatPath(path)
+	//
+	//	if t = strings.Count(path, splt); t < slashCount {
+	//		paths = nil
+	//		isDirs = nil
+	//		slashCount = t
+	//	}
+	//	if t == slashCount {
+	//		paths = append(paths, path)
+	//		if f.IsDir() {
+	//			isDirs = append(isDirs, true)
+	//		} else {
+	//			isDirs = append(isDirs, false)
+	//		}
+	//	}
+	//
+	//	return nil
+	//})
+	//if err != nil {
+	//	log.Printf("error when filepath.Walk(): %v\n", err)
+	//}
+	//
+	////分析得出结果
+	//if len(paths) == 1 {
+	//	if isDirs[0] {
+	//		return true, paths[0]
+	//	}
+	//}
+	//
+	//return false, ""
 }
 
 //遍历寻找某个文件
