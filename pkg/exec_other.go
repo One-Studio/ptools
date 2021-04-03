@@ -17,6 +17,14 @@ func CMD(command string) (output string, err error) {
 	return string(out), err
 }
 
+//参数以切片形式存放
+func ExecArgs(args []string) (output string, err error) {
+	cmd := exec.Command(args[0], args[1:]...)
+
+	out, err := cmd.CombinedOutput()
+	return string(out), err
+}
+
 //执行一次command指令且自定义方法处理每行结果
 func ExecRealtime(command string, method func(line string)) error {
 	//cmd/bash传参是为了使用二者自带的命令，直接exec无法使用这些命令
