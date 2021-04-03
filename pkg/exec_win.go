@@ -78,14 +78,8 @@ func GetBinaryPath(binary string) (string, error) {
 	return dir, err
 }
 
-//windows要用winPssuspend.exe 需指定其路径
-func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
-	cmdArgs := strings.Fields(command)
-	return ExecRealtimeControlArgs(cmdArgs, method, signal, winPssuspend)
-}
-
 //参数以切片形式存放
-func ExecRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
+func ExecRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error 	{
 	if exist := IsFileExisted(winPssuspend); !exist {
 		return errors.New("pssuspend.exe does not exist. check path string")
 	}

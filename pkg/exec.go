@@ -26,6 +26,12 @@ func ExecRealtimePrintGBK(command string) error {
 	})
 }
 
+//windows要用winPssuspend.exe 需指定其路径 其他系统留空
+func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
+	cmdArgs := strings.Fields(command)
+	return ExecRealtimeControlArgs(cmdArgs, method, signal, winPssuspend)
+}
+
 //实时控制的时候暂停
 func Pause(a chan rune)  {
 	a <- 'p'

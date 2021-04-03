@@ -9,7 +9,7 @@ import (
 	"syscall"
 )
 
-//执行一次command指令 跨平台兼容
+//执行一次command指令
 func CMD(command string) (output string, err error) {
 	cmd := exec.Command("/bin/bash", "-c", command)
 
@@ -64,10 +64,11 @@ func GetBinaryPath(binary string) (string, error) {
 	return dir, err
 }
 
-//winPssuspend留空
-func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
+//执行指令 实时控制 winPssuspend留空
+func ExecRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
 	//cmd/bash传参是为了使用二者自带的命令，直接exec无法使用这些命令
-	cmd := exec.Command("/bin/bash", "-c", command)
+	args = append([]string{"-c"}, args...)
+	cmd := exec.Command("/bin/bash", args...)
 
 	//标准输出pipe
 	stdout, err := cmd.StdoutPipe()
