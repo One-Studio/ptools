@@ -3,7 +3,7 @@ package ptools
 import (
 	"errors"
 	"fmt"
-	"log"
+	"os/user"
 	"path"
 	"regexp"
 	"runtime"
@@ -63,12 +63,12 @@ func ConfigDir() string {
 	if runtime.GOOS == "windows" {
 		return "."
 	} else {
-		dir, err := os.UserConfigDir()
+		usr, err := user.Current()
 		if err != nil {
-			log.Println(err)
+			panic("获取应用配置目录失败: " + err.Error())
 		}
 
-		return dir + "/" + AppDeveloper
+		return usr.HomeDir + "/" + AppDeveloper
 	}
 }
 

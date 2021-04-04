@@ -178,7 +178,9 @@ func testTopDir() {
 	}
 }
 
-
+func testConfigDir()  {
+	fmt.Println(tool.ConfigDir())
+}
 
 //TODO 测试完这个，win平台的几个工具就能用了
 func testFFmpeg()  {
@@ -211,7 +213,8 @@ func main() {
 
 	tool.Test()
 
-	testFFmpeg()
+	testConfigDir()
+	//testFFmpeg()
 	//testChan()
 	//testWG()
 	//testTool()
