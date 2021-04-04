@@ -3,8 +3,10 @@ package ptools
 import (
 	"errors"
 	"fmt"
+	"log"
 	"path"
 	"regexp"
+	"runtime"
 	"sync"
 	"time"
 
@@ -53,23 +55,22 @@ type GitHubLatest struct {
 	Assets  []Asset `json:"assets"`
 }
 
-//func CreateTool() *Tool {
-//	return &Tool{
-//		Name:            "",
-//		Path:            "",
-//		TakeOver:        false,
-//		Version:         "",
-//		VersionApi:      "",
-//		VersionApiCDN:   "",
-//		DownloadLink:    "",
-//		DownloadLinkCDN: "",
-//		VersionRegExp:   "",
-//		GithubRepo:      "",
-//		IsGitHub:        false,
-//		IsCLI:           false,
-//		KeyWords:        []string{},
-//	}
-//}
+var (
+	AppDeveloper = "One Studio"
+)
+
+func ConfigDir() string {
+	if runtime.GOOS == "windows" {
+		return "."
+	} else {
+		dir, err := os.UserConfigDir()
+		if err != nil {
+			log.Println(err)
+		}
+
+		return dir + "/" + AppDeveloper
+	}
+}
 
 //安装/更新工具
 //@param 空
@@ -163,23 +164,23 @@ func (t *Tool) Install() error {
 
 		tempVer = srcVer
 		//优先下载cdn源
-		if _, err := GrabDownload("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+		if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
 			fmt.Println("cdn源下载失败，再尝试一次...")
 			time.Sleep(time.Second * 2)
-			if _, err := GrabDownload("./temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+			if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
 				fmt.Println("cdn源下载失败，正在下载src源")
-				if _, err := GrabDownload("./temp/"+t.Name+"/src/", srcUrl); err != nil {
+				if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/src/", srcUrl); err != nil {
 					return err
 				} else {
-					tempDir = FormatPath("./temp/" + t.Name + "/src/")
+					tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/src/")
 					_, filename = path.Split(srcUrl)
 				}
 			} else {
-				tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
+				tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/cdn/")
 				_, filename = path.Split(cdnUrl)
 			}
 		} else {
-			tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
+			tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/cdn/")
 			_, filename = path.Split(cdnUrl)
 		}
 	} else {
@@ -192,7 +193,7 @@ func (t *Tool) Install() error {
 				return nil
 			}
 			//下载src
-			tempDir = FormatPath("./temp/" + t.Name + "/src/")
+			tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/src/")
 			tempVer = srcVer
 			url = srcUrl
 		} else if !srcOK && cdnOK {
@@ -201,7 +202,7 @@ func (t *Tool) Install() error {
 				return nil
 			}
 			//下载cdn
-			tempDir = FormatPath("./temp/" + t.Name + "/cdn/")
+			tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/cdn/")
 			tempVer = cdnVer
 			url = cdnUrl
 		} else {
@@ -213,7 +214,7 @@ func (t *Tool) Install() error {
 					return nil
 				}
 				//下载src
-				tempDir = FormatPath("./temp/" + t.Name + "/src/")
+				tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/src/")
 				tempVer = srcVer
 				url = srcUrl
 			case -1:
@@ -272,7 +273,7 @@ func (t *Tool) Install() error {
 	}
 
 	t.Version = tempVer
-	return os.RemoveAll("./temp/" + t.Name)
+	return os.RemoveAll(ConfigDir() + "/temp/" + t.Name)
 	//return nil
 }
 
