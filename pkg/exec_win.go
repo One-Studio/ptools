@@ -28,8 +28,6 @@ func CMD(command string) (output string, err error) {
 func ExecArgs(args []string) (output string, err error) {
 	cmd := exec.Command(args[0], args[1:]...)
 
-	//隐藏黑框 !仅win下用
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 
 	out, err := cmd.CombinedOutput()
 	return string(out), err
@@ -138,4 +136,9 @@ func ExecRealtimeControlArgs(args []string, method func(line string), signal cha
 	}()
 
 	return cmd.Wait()
+}
+
+func doHideWindow(cmd *exec.Cmd)  {
+	//隐藏黑框 !仅win下用
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }
