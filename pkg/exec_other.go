@@ -115,9 +115,8 @@ func CMDRealtimeControlArgs(args []string, method func(line string), signal chan
 
 //执行指令 实时控制 winPssuspend留空
 func ExecRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
-	//cmd/bash传参是为了使用二者自带的命令，直接exec无法使用这些命令
-	args = append([]string{"-c"}, args...)
-	cmd := exec.Command("/bin/bash", args...)
+	//TODO
+	cmd := exec.Command(args[0], args[1:]...)
 
 	//标准输出pipe
 	stdout, err := cmd.StdoutPipe()
@@ -212,7 +211,7 @@ func realtimeControl(cmd *exec.Cmd, signal chan<- rune) (err error) {
 			break
 		}
 	}
-	
+
 	return
 }
 
