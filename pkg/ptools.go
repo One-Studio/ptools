@@ -5,9 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/axgle/mahonia"
-	"github.com/cavaliercoder/grab"
-	"github.com/gen2brain/go-unarr"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,6 +16,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/axgle/mahonia"
+	"github.com/cavaliercoder/grab"
+	"github.com/gen2brain/go-unarr"
 )
 
 //简单测试 打个招呼
@@ -248,15 +249,15 @@ func SafeDecompress(from string, to string) error {
 	ext := path.Ext(filename)
 	randStr := "_temp" + strconv.Itoa(rand.Int())
 	if IsNonASCII(from) {
-		if err := os.MkdirAll("./" +randStr, os.ModePerm); err != nil {
+		if err := os.MkdirAll("./"+randStr, os.ModePerm); err != nil {
 			return err
 		}
 
-		if err := XCopy(from, "./"+randStr+ "/" +randStr+ ext); err != nil {
+		if err := XCopy(from, "./"+randStr+"/"+randStr+ext); err != nil {
 			fmt.Println(err)
 		}
 
-		from = "./"+ randStr + "/" + randStr + ext
+		from = "./" + randStr + "/" + randStr + ext
 	}
 
 	a, err := unarr.NewArchive(from)

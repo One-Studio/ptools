@@ -164,12 +164,12 @@ func (t *Tool) Install() error {
 
 		tempVer = srcVer
 		//优先下载cdn源
-		if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+		if _, err := GrabDownload(ConfigDir()+"/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
 			fmt.Println("cdn源下载失败，再尝试一次...")
 			time.Sleep(time.Second * 2)
-			if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
+			if _, err := GrabDownload(ConfigDir()+"/temp/"+t.Name+"/cdn/", cdnUrl); err != nil {
 				fmt.Println("cdn源下载失败，正在下载src源")
-				if _, err := GrabDownload(ConfigDir() + "/temp/"+t.Name+"/src/", srcUrl); err != nil {
+				if _, err := GrabDownload(ConfigDir()+"/temp/"+t.Name+"/src/", srcUrl); err != nil {
 					return err
 				} else {
 					tempDir = FormatPath(ConfigDir() + "/temp/" + t.Name + "/src/")
@@ -241,11 +241,11 @@ func (t *Tool) Install() error {
 		}
 
 		//移除根目录
-		ok, topDir := CheckTopDir(tempDir+"temp")
+		ok, topDir := CheckTopDir(tempDir + "temp")
 		//fmt.Println("ok=", ok, "topDir=", topDir)
 		if ok {
 			_ = os.Rename(topDir, tempDir+"temp_swap")
-			_ = os.RemoveAll(tempDir+"temp")
+			_ = os.RemoveAll(tempDir + "temp")
 			_ = os.Rename(tempDir+"temp_swap", tempDir+"temp")
 		}
 
