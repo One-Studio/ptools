@@ -79,32 +79,37 @@ func CMDRealtime(command string, method func(line string)) error {
 	return CMDRealtimeArgs(strings.Fields(command), method)
 }
 
-//// TODO:
-// @ 指令[]string的方法带args后缀 指令string的在分割指令之后调用args
-// 1. Exec 执行指令
-// 2. CMD 根据系统执行命令，调用Exec
-//    windows "cmd.exe", "/c", args...
-//    other   "/bin/bash", "-c", args...
-// 3. doRealtime 执行指令，实时对每行字符串进行操作
-//    - ExecRealtime
-//    - CMDRealtime
-// 4. doRealtimeControl 执行指令，实时对每行字符串进行操作，且实时暂停/继续/结束
-//    - ExecRealtimeControl
-//    - CMDRealtimeControl
+//执行一次command指令且实时输出每行结果
+func ExecRealtimePrint(command string) error {
+	return ExecRealtime(command, func(line string) {
+		fmt.Println(line)
+	})
+}
 
-// 操作一：分割行
-// go func() {
-// 	scanner.Split(ScanCRandLF)
-// 	for scanner.Scan() {
-// 		对每一行的操作
-// 		method(string(scanner.Bytes()))
-// 	}
-// }()
-// 操作二：实时暂停/继续/结束 TODO: 解决实时控制的问题
+//执行时实时输出每行并解决cmd chcp 936 输出乱码问题
+func ExecRealtimePrintGBK(command string) error {
+	return ExecRealtime(command, func(line string) {
+		fmt.Println(ConvertString(line))
+	})
+}
+
+//执行一次command指令且实时输出每行结果
+func CMDRealtimePrint(command string) error {
+	return CMDRealtime(command, func(line string) {
+		fmt.Println(line)
+	})
+}
+
+//执行时实时输出每行并解决cmd chcp 936 输出乱码问题
+func CMDRealtimePrintGBK(command string) error {
+	return CMDRealtime(command, func(line string) {
+		fmt.Println(ConvertString(line))
+	})
+}
+
+// TODO: 解决实时控制的问题 (实时暂停/继续/结束)
 // 根据 win or others
 // realtimeControl
-
-////TODO: END
 
 //// 4
 
@@ -183,24 +188,13 @@ func ExecRealtimeControlArgs(args []string, method func(line string), signal cha
 	return cmd.Wait()
 }
 
-//执行一次command指令且实时输出每行结果
-func ExecRealtimePrint(command string) error {
-	return ExecRealtime(command, func(line string) {
-		fmt.Println(line)
-	})
-}
-
-//执行时实时输出每行并解决cmd chcp 936 输出乱码问题
-func ExecRealtimePrintGBK(command string) error {
-	return ExecRealtime(command, func(line string) {
-		fmt.Println(ConvertString(line))
-	})
-}
-
 //windows要用winPssuspend.exe 需指定其路径 其他系统留空
 func ExecRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
-	cmdArgs := strings.Fields(command)
-	return ExecRealtimeControlArgs(cmdArgs, method, signal, winPssuspend)
+	return ExecRealtimeControlArgs(strings.Fields(command), method, signal, winPssuspend)
+}
+
+func CMDRealtimeControl(command string, method func(line string), signal chan rune, winPssuspend string) error {
+	return CMDRealtimeControlArgs(strings.Fields(command), method, signal, winPssuspend)
 }
 
 //实时控制的时候暂停

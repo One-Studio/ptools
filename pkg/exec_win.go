@@ -17,6 +17,10 @@ func CMDRealtimeArgs(args []string, method func(line string)) error {
 	return ExecRealtimeArgs(append([]string{"cmd.exe", "/c"}, args...), method)
 }
 
+func CMDRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
+	return ExecRealtimeControlArgs(append([]string{"cmd.exe", "/c"}, args...), method, signal, winPssuspend)
+}
+
 // //参数以切片形式存放
 // func ExecArgs(args []string) (output string, err error) {
 // 	cmd := exec.Command(args[0], args[1:]...)

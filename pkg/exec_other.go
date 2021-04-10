@@ -12,8 +12,13 @@ import (
 func CMDArgs(args []string) (output string, err error) {
 	return ExecArgs(append([]string{"/bin/bash", "-c"}, args...))
 }
+
 func CMDRealtimeArgs(args []string, method func(line string)) error {
 	return ExecRealtimeArgs(append([]string{"/bin/bash", "-c"}, args...), method)
+}
+
+func CMDRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
+	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}, method, signal, winPssuspend)
 }
 
 //查找（环境变量+当前位置）可执行文件的位置
