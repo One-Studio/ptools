@@ -3,9 +3,7 @@ package ptools
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os/exec"
-	"strconv"
 	"strings"
 )
 
@@ -108,8 +106,6 @@ func CMDRealtimePrintGBK(command string) error {
 }
 
 // TODO: 解决实时控制的问题 (实时暂停/继续/结束)
-// 根据 win or others
-// realtimeControl
 
 //// 4
 
@@ -145,45 +141,7 @@ func ExecRealtimeControlArgs(args []string, method func(line string), signal cha
 	}()
 
 	//TODO: 实时控制
-	go func() {
-		for control := range signal {
-			switch control {
-			case 'p':
-				//暂停
-				fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := CMD(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
-					//log.Println(out)
-					log.Println(err)
-				}
-			case 'r':
-				//继续
-				fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
-				if _, err := CMD(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
-					//log.Println(out)
-					log.Println(err)
-				}
-			case 'q':
-				//中止
-				_ = cmd.Process.Kill()
-			}
-		}
-	}()
-	// go func() {
-	// 	for control := range signal {
-	// 		switch control {
-	// 		case 'p':
-	// 			//暂停
-	// 			cmd.Process.Signal(syscall.SIGTSTP) //win下不可用
-	// 		case 'r':
-	// 			//继续
-	// 			cmd.Process.Signal(syscall.SIGCONT) //win下不可用
-	// 		case 'q':
-	// 			//中止
-	// 			err = cmd.Process.Kill()
-	// 			break
-	// 		}
-	// 	}
-	// }()
+	go realtimeControl(cmd, signal, winPssuspend)
 
 	return cmd.Wait()
 }

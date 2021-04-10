@@ -3,7 +3,10 @@
 package ptools
 
 import (
+	"fmt"
+	"log"
 	"os/exec"
+	"strconv"
 	"strings"
 	"syscall"
 )
@@ -19,6 +22,30 @@ func CMDRealtimeArgs(args []string, method func(line string)) error {
 
 func CMDRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
 	return ExecRealtimeControlArgs(append([]string{"cmd.exe", "/c"}, args...), method, signal, winPssuspend)
+}
+
+func realtimeControl(cmd *exec.Cmd, signal chan rune, winPssuspend string) {
+	for control := range signal {
+		switch control {
+		case 'p':
+			//暂停
+			fmt.Println(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid))
+			if _, err := CMD(FormatPath(winPssuspend) + " " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				//log.Println(out)
+				log.Println(err)
+			}
+		case 'r':
+			//继续
+			fmt.Println(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid))
+			if _, err := CMD(FormatPath(winPssuspend) + " -r " + strconv.Itoa(cmd.Process.Pid)); err != nil {
+				//log.Println(out)
+				log.Println(err)
+			}
+		case 'q':
+			//中止
+			_ = cmd.Process.Kill()
+		}
+	}
 }
 
 // //参数以切片形式存放

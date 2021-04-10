@@ -21,6 +21,23 @@ func CMDRealtimeControlArgs(args []string, method func(line string), signal chan
 	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}, method, signal, winPssuspend)
 }
 
+func realtimeControl(cmd *exec.Cmd, signal chan rune, winPssuspend string) {
+	for control := range signal {
+		switch control {
+		case 'p':
+			//暂停
+			cmd.Process.Signal(syscall.SIGTSTP) //win下不可用
+		case 'r':
+			//继续
+			cmd.Process.Signal(syscall.SIGCONT) //win下不可用
+		case 'q':
+			//中止
+			err = cmd.Process.Kill()
+			break
+		}
+	}
+}
+
 //查找（环境变量+当前位置）可执行文件的位置
 func GetBinaryPath(binary string) (string, error) {
 	dir, err := CMD("which " + binary)
