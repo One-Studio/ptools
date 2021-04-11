@@ -211,7 +211,7 @@ func main() {
 
 	tool.Test()
 
-	testConfigDir()
+	//testConfigDir()
 	//testFFmpeg()
 	//testChan()
 	//testWG()

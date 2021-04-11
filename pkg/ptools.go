@@ -82,7 +82,7 @@ func DownloadFile(location string, url string) error {
 	//确保下载位置存在
 	_, fileName := path.Split(url)
 	ok := IsFileExisted(location)
-	if ok == false {
+	if !ok {
 		err := os.MkdirAll(location, os.ModePerm)
 		if err != nil {
 			return err
@@ -159,7 +159,7 @@ func ConvertString(s string) string {
 
 //比较版本号 1: v1>v2  -1: v1<v2  0: v1=v2
 func CompareVersion(v1, v2 string) int {
-	re, err := regexp.Compile("\\d+|\\D+")
+	re, err := regexp.Compile(`\\d+|\\D+`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -339,16 +339,16 @@ func Unzip(zipFile string, to string) error {
 			}
 
 			inFile, err := f.Open()
-			defer inFile.Close()
 			if err != nil {
 				return err
 			}
+			defer inFile.Close()
 
 			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			defer outFile.Close()
 			if err != nil {
 				return err
 			}
+			defer outFile.Close()
 
 			_, err = io.Copy(outFile, inFile)
 			if err != nil {
