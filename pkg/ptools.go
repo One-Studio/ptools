@@ -5,9 +5,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/axgle/mahonia"
-	"github.com/cavaliercoder/grab"
-	"github.com/gen2brain/go-unarr"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,6 +16,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/axgle/mahonia"
+	"github.com/cavaliercoder/grab"
+	"github.com/gen2brain/go-unarr"
 )
 
 //简单测试 打个招呼
@@ -81,7 +82,7 @@ func DownloadFile(location string, url string) error {
 	//确保下载位置存在
 	_, fileName := path.Split(url)
 	ok := IsFileExisted(location)
-	if ok == false {
+	if !ok {
 		err := os.MkdirAll(location, os.ModePerm)
 		if err != nil {
 			return err
@@ -158,7 +159,7 @@ func ConvertString(s string) string {
 
 //比较版本号 1: v1>v2  -1: v1<v2  0: v1=v2
 func CompareVersion(v1, v2 string) int {
-	re, err := regexp.Compile("\\d+|\\D+")
+	re, err := regexp.Compile(`\\d+|\\D+`)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -248,15 +249,15 @@ func SafeDecompress(from string, to string) error {
 	ext := path.Ext(filename)
 	randStr := "_temp" + strconv.Itoa(rand.Int())
 	if IsNonASCII(from) {
-		if err := os.MkdirAll("./" +randStr, os.ModePerm); err != nil {
+		if err := os.MkdirAll("./"+randStr, os.ModePerm); err != nil {
 			return err
 		}
 
-		if err := XCopy(from, "./"+randStr+ "/" +randStr+ ext); err != nil {
+		if err := XCopy(from, "./"+randStr+"/"+randStr+ext); err != nil {
 			fmt.Println(err)
 		}
 
-		from = "./"+ randStr + "/" + randStr + ext
+		from = "./" + randStr + "/" + randStr + ext
 	}
 
 	a, err := unarr.NewArchive(from)
@@ -338,16 +339,16 @@ func Unzip(zipFile string, to string) error {
 			}
 
 			inFile, err := f.Open()
-			defer inFile.Close()
 			if err != nil {
 				return err
 			}
+			defer inFile.Close()
 
 			outFile, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-			defer outFile.Close()
 			if err != nil {
 				return err
 			}
+			defer outFile.Close()
 
 			_, err = io.Copy(outFile, inFile)
 			if err != nil {

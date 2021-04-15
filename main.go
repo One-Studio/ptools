@@ -163,8 +163,6 @@ func testDecomp1() {
 
 	//TODO 核心操作
 
-
-
 	//fmt.Println("得到的exe路径:", tool.GetFilePathFromDir("./temp/hlae", "AfxHook.dat"))
 	////temp\ffmpeg\AfxHook.dat
 	//_ = tool.XMove("temp\\hlae\\AfxHook.dat", "D:\\afx.dat")
@@ -178,12 +176,12 @@ func testTopDir() {
 	}
 }
 
-func testConfigDir()  {
+func testConfigDir() {
 	fmt.Println(tool.ConfigDir())
 }
 
 //TODO 测试完这个，win平台的几个工具就能用了
-func testFFmpeg()  {
+func testFFmpeg() {
 	command := []string{
 		"bin\\ffmpeg.exe",
 		"-i",
@@ -213,7 +211,7 @@ func main() {
 
 	tool.Test()
 
-	testConfigDir()
+	//testConfigDir()
 	//testFFmpeg()
 	//testChan()
 	//testWG()
