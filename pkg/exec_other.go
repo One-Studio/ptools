@@ -3,6 +3,7 @@
 package ptools
 
 import (
+	"log"
 	"os/exec"
 	"strings"
 	"syscall"
@@ -18,7 +19,7 @@ func CMDRealtimeArgs(args []string, method func(line string)) error {
 }
 
 func CMDRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
-	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}, method, signal, winPssuspend)
+	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}), method, signal, winPssuspend)
 }
 
 func realtimeControl(cmd *exec.Cmd, signal chan rune, winPssuspend string) {
@@ -26,13 +27,17 @@ func realtimeControl(cmd *exec.Cmd, signal chan rune, winPssuspend string) {
 		switch control {
 		case 'p':
 			//暂停
-			cmd.Process.Signal(syscall.SIGTSTP) //win下不可用
+			_ = cmd.Process.Signal(syscall.SIGTSTP) //win下不可用
 		case 'r':
 			//继续
-			cmd.Process.Signal(syscall.SIGCONT) //win下不可用
+			_ = cmd.Process.Signal(syscall.SIGCONT) //win下不可用
 		case 'q':
 			//中止
-			err = cmd.Process.Kill()
+			err := cmd.Process.Kill()
+			if err != nil {
+				log.Println(err)
+			}
+
 			break
 		}
 	}
@@ -45,24 +50,6 @@ func GetBinaryPath(binary string) (string, error) {
 	return dir, err
 }
 
-func realtimeControl(cmd *exec.Cmd, signal chan<- rune) (err error) {
-	for control := range signal {
-		switch control {
-		case 'p':
-			//暂停
-			_ = cmd.Process.Signal(syscall.SIGTSTP) //win下不可用
-		case 'r':
-			//继续
-			_ = cmd.Process.Signal(syscall.SIGCONT) //win下不可用
-		case 'q':
-			//中止
-			err = cmd.Process.Kill()
-			break
-		}
-	}
-
-	return
-}
 
 func doHideWindow(cmd *exec.Cmd) {
 }
