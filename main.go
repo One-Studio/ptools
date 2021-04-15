@@ -211,12 +211,6 @@ func main() {
 
 	tool.Test()
 
-	paths, err :=tool.ListDir("./", "")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(paths)
 	//testConfigDir()
 	//testFFmpeg()
 	//testChan()
