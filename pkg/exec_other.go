@@ -18,7 +18,7 @@ func CMDRealtimeArgs(args []string, method func(line string)) error {
 }
 
 func CMDRealtimeControlArgs(args []string, method func(line string), signal chan rune, winPssuspend string) error {
-	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}, method, signal, winPssuspend)
+	return CMDRealtimeControlArgs(append([]string{"/bin/bash", "-c"}), method, signal, winPssuspend)
 }
 
 func realtimeControl(cmd *exec.Cmd, signal chan rune, winPssuspend string) {

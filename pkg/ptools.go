@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/mholt/archiver"
 	"io"
 	"io/ioutil"
 	"log"
@@ -357,6 +358,13 @@ func Unzip(zipFile string, to string) error {
 		}
 	}
 	return nil
+}
+
+//RAR解压
+func Unrar(rarFile string, to string) error {
+	r := archiver.NewRar()
+
+	return r.Unarchive(rarFile, to)
 }
 
 //TODO 元素去重
