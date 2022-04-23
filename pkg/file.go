@@ -1,7 +1,6 @@
 package ptools
 
 import (
-	"github.com/otiai10/copy"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/otiai10/copy"
 )
 
 //规格化路径
@@ -174,8 +175,8 @@ func GetFilePathFromDir(dir, name string) (result string) {
 	return
 }
 
-//获取指定路径下的所有文件，只搜索当前路径，不进入下一级目录，可匹配后缀过滤（suffix为空则不过滤）TODO
-func ListDir(path2List, suffix string) (files []string, err error) {
+//获取指定路径下的所有文件，只搜索当前路径，不进入下一级目录，可匹配后缀过滤（suffix为空则不过滤）
+func ListDir(path2List string, suffix []string) (files []string, err error) {
 	files = []string{}
 
 	dir, err := ioutil.ReadDir(path2List)
@@ -183,15 +184,23 @@ func ListDir(path2List, suffix string) (files []string, err error) {
 		return nil, err
 	}
 
-	suffix = strings.ToLower(suffix) //匹配后缀
+	// suffix = strings.ToLower(suffix) //匹配后缀
 
-	for _, v := range dir {
+	for _, d := range dir {
 		//if v.IsDir() {
 		//	continue //忽略目录
 		//}
-		if len(suffix) == 0 || strings.HasSuffix(strings.ToLower(v.Name()), suffix) {
-			//文件后缀匹配
-			files = append(files, path.Join(path2List, v.Name()))
+
+		ok := false
+		for _, v := range suffix {
+			if strings.HasSuffix(strings.ToLower(d.Name()), strings.ToLower(v)) {
+				ok = true
+				break
+			}
+		}
+		
+		if ok {
+			files = append(files, path.Join(path2List, d.Name()))
 		}
 	}
 
